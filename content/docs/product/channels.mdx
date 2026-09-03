@@ -1,0 +1,26 @@
+---
+title: Kanały
+description: Jedna grupa, jeden admin, zaproszenia.
+icon: Hash
+---
+
+Nie ma serwera nad kanałami. Kto przychodzi z Discorda, szuka guildi, ról i `#ogólny` pod spodem — u nas kanał to po prostu grupa. W Mongo: nazwa, avatar, `members`, `admin` = twórca. REST: [API kanałów](/docs/api/channels).
+
+`POST /api/channel/create-channel` `{ name, members }`. Twórca jest jedynym adminem i koniec. Nie ma „drugiego moda” ani bota z kickiem. `POST /api/channel/add-user/{id}` `{ userIdToAdd }` też tylko on — klient zwykle wrzuca `members` od razu przy create, add-user zostaje na dokładanie kogoś później.
+
+Z zewnątrz wchodzisz zaproszeniem albo add-user. Publicznego discovery nie ma. Nie da się wyszukać kanału po nazwie z ulicy.
+
+| | |
+| --- | --- |
+| `GET/POST /api/channel/{id}/invites` | lista / `{ maxUses? }` |
+| `DELETE …/invites/{inviteId}` | unieważnienie |
+| `GET /api/invite/{id}` | podgląd, musisz być zalogowany |
+| `POST /api/invite/{id}/accept` | join |
+
+Podgląd bywa: brak, wygasłe, revoked, limit. UI `/invite/:id` ma to rozróżnić, nie pokazywać jednego „nie działa”. `DELETE /api/channel/delete/{id}` ścina wiadomości na amen — to nie leave. Po `leave` wracasz tylko nowym zaproszeniem, stary link Cię nie wpuści jak był jednorazowy albo revoked.
+
+Kick / unban / unmute: `{ userId }`. Ban i mute-member: `{ userId, durationSeconds? }` — bez czasu = na stałe, w UI od 5 min do 7 dni. Slowmode i lock: `PATCH`, nie POST. Zgłoszenie: `{ reason, details? }` (`spam`, `offensive`, `harassment`, `illegal`, `impersonation`, `other`). `POST …/mute` to wyciszenie powiadomień u siebie. Mute członka to inna trasa (`mute-member`). Łatwo je pomylić, bo obie mają „mute” w nazwie.
+
+Głos wisi na tym samym kanale, nie ma osobnego voice channel. Token: `POST /api/voice/token` `{ channelId }`, ramki `channel-voice:*`. Samo otwarcie czatu nie łączy mikrofonu — musisz `join`. [Głos](/docs/product/connections).
+
+Na liście WS: `channel-added`, `left`, `deleted`, `member-joined` / `left`, `name-updated`, `avatar-updated`, `slowmode-updated`, `chat-locked-updated`, `moderation-updated`. Jak dodajesz pole na kanale i nie puszczasz ramki, druga karta zobaczy zmianę dopiero po reloadzie.

@@ -1,0 +1,125 @@
+---
+title: Authentication
+description: Session cookies, CSRF, Turnstile, and client identifier.
+icon: KeyRound
+---
+
+JWT does not land in `localStorage`. After login you get HttpOnly cookies (access + refresh). Further requests use `credentials: include`. If you paste a token into `Authorization: Bearer`, the backend does not read it — the session is in the cookie or it is not there.
+
+Signup, login, login/2fa, and refresh do not require CSRF. Other browser mutations do. Turnstile on production; in `development` the backend does not require it — do not paste a site key “just in case” into the frontend `.env`.
+
+## POST `/api/auth/signup`
+
+Aliases: `/api/auth/register`. Turnstile on production. CSRF not required here.
+
+```http
+POST /api/auth/signup
+Content-Type: application/json
+X-Klovy-Client: KlovyChatApp/1.0
+```
+
+```json
+{
+  "username": "jan_kowalski",
+  "password": "********",
+  "turnstileToken": "…",
+  "language": "pl"
+}
+```
+
+`username`: 3–32 characters, lowercase letters, digits, `_`. Password: min. 8 characters, uppercase and lowercase letter, digit, character from `@$!%*?&`; passwords from known leaks are rejected.
+
+## POST `/api/auth/login`
+
+Aliases: `/sign-in`, `/signin`. CSRF is not required.
+
+```json
+{
+  "username": "jan_kowalski",
+  "password": "********",
+  "turnstileToken": "…"
+}
+```
+
+Success (without 2FA): `user` object + cookies + `csrfToken`.
+
+When 2FA is enabled:
+
+```json
+{
+  "requiresTwoFactor": true,
+  "twoFactorToken": "…"
+}
+```
+
+## POST `/api/auth/login/2fa`
+
+```json
+{
+  "twoFactorToken": "…",
+  "code": "123456",
+  "turnstileToken": "…"
+}
+```
+
+`code` — TOTP or backup code.
+
+## POST `/api/auth/refresh`
+
+No CSRF. New cookie pair. The client calls this on `401` and retries the original request.
+
+## POST `/api/auth/logout`
+
+Requires a session. Revokes the current device.
+
+## GET `/api/auth/userinfo`
+
+Aliases: `GET /api/auth`, `/me`, `/user`. Current user.
+
+## POST `/api/auth/ws-crypto`
+
+Session required. AES-GCM material for WebSocket frames.
+
+```json
+{
+  "token": "…",
+  "key": "…",
+  "expiresIn": 3600
+}
+```
+
+## GET `/api/auth/registration-status`
+
+Public. Whether signup is open:
+
+```json
+{
+  "open": true,
+  "message": "…"
+}
+```
+
+## CSRF
+
+| | |
+| --- | --- |
+| Cookie | `csrf_token` |
+| Header | `x-csrf-token` (same value) |
+| JSON | `csrfToken` field on login / refresh |
+
+**No CSRF:** signup, login, login/2fa, refresh, `/api/security/*`. GET/HEAD/OPTIONS always without.
+
+Mismatch → `403`
+
+```json
+{ "error": "Invalid or missing CSRF token" }
+```
+
+## Client headers
+
+| Header | Value |
+| --- | --- |
+| `X-Klovy-Client` | `KlovyChatApp/1.0` |
+| `X-Klovy-User-Agent` | browser / Tauri description |
+
+Must pass CORS. Locally `ORIGIN` and `FRONTEND_URL` must match the Vite origin, otherwise it will fail.

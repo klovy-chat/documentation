@@ -1,0 +1,23 @@
+---
+title: Voice and video
+description: LiveKit token over HTTP, ring over WS.
+icon: Phone
+---
+
+Actix doesn't carry RTP. You get a JWT and cloud URL; audio/video packets go straight to LiveKit. The client rejects `url` outside `VITE_LIVEKIT_ALLOWED_HOSTS` — even if the token is signed, a host not on the list won't connect. Endpoints: [voice API](/docs/api/voice).
+
+```http
+POST /api/voice/token
+```
+
+```json
+{ "peerId": "userId" }
+```
+
+or `{ "channelId": "…" }`. Response has `token`, `url`, `room`. `GET /api/voice/active` says if something is already up (`mode`: `audio` | `video`). On the backend: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`. Without those three the token won't sign; UI often shows "can't connect" while the backend log is just missing env.
+
+1:1 on WS, payload `{ from, to }`, invite may add `mode`. From client: `call:invite` / `accept` / `reject` / `cancel` / `end` / `timeout`. From server: `incoming`, `accepted`, `rejected`, `cancelled`, `ended`, `unavailable` (busy or offline). Order matters: frame first, then token, then connect to room. Reverse that and you get a room without the other side or a ring without media. History gets entry `messageType: CALL`.
+
+On a channel there is no second "voice channel" entity. `channel-voice:join` / `leave` / `state` with `{ channelId }`. Text composer stays — people type and talk on the same channel. Opening chat alone doesn't connect the mic; without `join` LiveKit won't let you in even if you already have a token.
+
+Mic, PTT, and share quality (480p–1080p, fps, Opus) live in `/settings/voice`. getUserMedia is the browser's job — the backend doesn't see it. No device on Linux or Safari blocking = not a 403 from API, just silence on the client.

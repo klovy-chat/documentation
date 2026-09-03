@@ -1,0 +1,17 @@
+---
+title: Privacy
+description: What we actually protect, and what we don't promise.
+icon: Shield
+---
+
+From the code side: [security](/docs/developers/security). Here it's mostly what you must not write in README or UI, because someone will copy it to the landing page.
+
+Passwords: Argon2, character policy, breach checks. Login: Turnstile on prod, rate limits, TOTP if enabled. Session in HttpOnly, revocable from device list. Browser mutations: CSRF, Origin, `X-Klovy-Client`. Files: R2 → quarantine → ClamAV, then public URL. Some Mongo fields encrypted with server key. WS frames after `ws-crypto` also AES-GCM.
+
+We don't serve ads and we don't sell data.
+
+**Don't write "E2EE".** That key sketch left the repo. The server reads messages because search, pins, mentions, and moderation depend on it. Client envelope is transport, not Signal. Operators see reports and warnings, can disable accounts. Delete in the app doesn't clean screenshots on someone's disk — if they captured the screen, that's no longer your database.
+
+Report a channel: `POST /api/channel/{id}/report`. Vulnerabilities — Security Advisories in the specific repo, not a public issue with PoC. `.env` and Tauri keys stay local.
+
+ToS, privacy, and guidelines are on [klovy.chat](https://klovy.chat). That site is dated **September 1, 2026**. Questions outside code: [kontakt@klovy.chat](mailto:kontakt@klovy.chat).

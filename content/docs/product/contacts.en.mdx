@@ -1,0 +1,24 @@
+---
+title: Contacts and DMs
+description: Invite by username, block, wipe.
+icon: Users
+---
+
+You can't message someone off the street. Friends first, then DM. This isn't Slack with a workspace where everyone sees everyone. REST: [contacts and friends](/docs/api/contacts-friends).
+
+`POST /api/friends/send` `{ username }` — no `@`. If the other side already sent a request, the backend may return `autoAccepted` and you have DM right away. Don't treat `autoAccepted` as an error; UI should go to the friends list.
+
+| | |
+| --- | --- |
+| `GET` | `/api/friends/list`, `/received`, `/sent` |
+| `GET` | `/api/friends/status/{userId}` |
+| `POST` | `/{requestId}/accept`, `reject`, `cancel` |
+| `DELETE` | `/api/friends/{userId}` — **deletes DM history** |
+
+`status` has `isFriend`, block flags, and `pendingRequest` or `null`. WS: `friendship-added`, `friendship-removed`. Removing a friend isn't a quiet unfollow — conversation history goes with it. To clear chat only, keep the friend and wipe: `DELETE /api/contacts/{id}/conversation`.
+
+Client list: `GET /api/contacts/get-contacts-for-list`. Search: `POST /api/contacts/search` `{ searchTerm }` — not `query`. An old draft body with `query` gets 400 and you'll spend an hour in the validator.
+
+Profile `GET …/{id}/profile`. Block and mute are toggle POST, not a separate un-block. Blocked: `GET …/blocked`. Block cuts DM. On a channel you still need kick/ban — different relationship. WS: `contact-block-updated`, `conversation-deleted`, plus profile / avatar / banner updates.
+
+Someone's presence: `GET /api/users/status/{userId}`. Yours: `POST /api/auth/availability-status` `{ availabilityStatus }` (`online`, `away`, `brb`, `dnd`). Idle in the client uses that POST — don't duplicate `set-status` on WS or state drifts between tabs.

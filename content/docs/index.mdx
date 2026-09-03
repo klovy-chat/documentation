@@ -1,0 +1,34 @@
+---
+title: Start
+description: Gdzie leży kod i od której strony to czytać.
+icon: Sparkles
+---
+
+Klovy Chat nie jest jednym repozytorium z workspace’ami. Frontend, backend, desktop i strona produktu żyją osobno, każde ze swoim README, licencją i pipeline’em. Jak klonujesz tylko jeden kawałek, reszta i tak musi gdzieś stać — lokalnie zwykle obok siebie, na produkcji pod osobnymi hostami. Te docs są jeszcze jednym folderem, nie siedzą w `frontend/docs`.
+
+Appka na [app.klovy.chat](https://app.klovy.chat) gada z API REST-em i WebSocketem. Nie wystawiamy bot API, nie ma OAuth dla aplikacji trzecich, nie ma webhooków ani slash commandów. Jak ktoś szuka „jak napisać bota do Klovy”, to nie tu i nie w tym kodzie.
+
+<Cards>
+  <Card title="Stack" href="/docs/developers">
+    Architektura, env, mapa `src/`.
+  </Card>
+  <Card title="API" href="/docs/api">
+    Ścieżki, body, CSRF, ramki WS.
+  </Card>
+  <Card title="Produkt" href="/docs/product">
+    Kanał, DM, konto, głos — jak to jest ułożone.
+  </Card>
+</Cards>
+
+Jak pierwszy raz siadasz: [odpal frontend i backend](/docs/developers/local-setup). Mongo musi wstać, inaczej `cargo run` nawet nie dojdzie do bindu. Potem warto rzucić okiem na [architekturę](/docs/developers/architecture), bo Axum i Actix siedzą w jednej binarkce i łatwo się pomylić co jest „brzegiem”. Nowy endpoint to zawsze dwa miejsca: `src/api` na frontendzie i `src/routes` na backendzie. Same typy ramek WebSocket są w `protocol.ts` i w `ws/handlers.rs` — jak zmienisz string po jednej stronie, druga milczy albo sypie `error`.
+
+Jesteśmy w publicznej becie. Funkcje się ruszają. Jak ta strona kłóci się z kodem, patrz na GitHub, nie na teksty z [klovy.chat](https://klovy.chat).
+
+| Repo | Co tam jest |
+| --- | --- |
+| [frontend](https://github.com/klovy-chat/frontend) | React, Vite, to co widzisz na app.klovy.chat |
+| [backend](https://github.com/klovy-chat/backend) | Rust, REST i WS na api.klovy.chat |
+| [application](https://github.com/klovy-chat/application) | Tauri; ładuje ten sam frontend, nie ma drugiego UI |
+| [website](https://github.com/klovy-chat/website) | Landing, download, blog |
+
+Hasła idą w Argon2, sesja w ciasteczkach HttpOnly, mutacje z przeglądarki przez CSRF, załączniki przez ClamAV. **E2EE nie ma.** Serwer widzi treść wiadomości, bo na niej stoi szukanie, piny i moderacja. Ramki WS po `POST /api/auth/ws-crypto` i tak lecą AES-GCM, ale to transport, nie Signal. Dłużej: [prywatność](/docs/product/privacy) i [bezpieczeństwo](/docs/developers/security).

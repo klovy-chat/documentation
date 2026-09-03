@@ -1,0 +1,108 @@
+---
+title: Contacts and friends
+description: Invites, friend list, blocks, and profiles.
+icon: UserPlus
+---
+
+`/api/friends` (also `/api/friend`) and `/api/contacts` (`/api/contact`). Session, whitelist. Friends are invites and the relationship. Contacts are the DM list, block, mute, and history wipe. `DELETE /api/friends/{id}` removes the friend **and** history — wiping the conversation alone is `DELETE` on contacts.
+
+Search uses `{ searchTerm }`, not `query`. List in the official client: `/api/contacts/get-contacts-for-list`.
+
+## Friends
+
+### GET `/api/friends/list`
+
+Alias: `GET /api/friends`.
+
+```json
+{ "friends": [] }
+```
+
+### POST `/api/friends/send`
+
+Aliases: `/request`, `POST /api/friends`.
+
+```json
+{ "username": "jan_kowalski" }
+```
+
+No `@`. Possible `autoAccepted` when the other side already sent an invite.
+
+### GET `/api/friends/received`
+
+Alias: `/requests/received`.
+
+```json
+{ "requests": [] }
+```
+
+### GET `/api/friends/sent`
+
+Alias: `/requests/sent`.
+
+### GET `/api/friends/status/{otherUserId}`
+
+```json
+{
+  "isFriend": false,
+  "isBlockedByMe": false,
+  "isBlockedByOther": false,
+  "pendingRequest": { "direction": "outgoing", "requestId": "…" }
+}
+```
+
+### POST `/api/friends/{requestId}/accept`
+
+```json
+{ "message": "…", "friend": {} }
+```
+
+### POST `/api/friends/{requestId}/reject`
+
+### POST `/api/friends/{requestId}/cancel`
+
+### DELETE `/api/friends/{friendUserId}`
+
+Removes the friend and **DM history**.
+
+WS: `friendship-added`, `friendship-removed`.
+
+## Contacts (DM list)
+
+### GET `/api/contacts/get-contacts-for-list`
+
+Aliases: `GET /api/contacts`, `/list`. Official client uses `/get-contacts-for-list`.
+
+```json
+{ "contacts": [] }
+```
+
+### POST `/api/contacts/search`
+
+```json
+{ "searchTerm": "jan" }
+```
+
+### GET `/api/contacts/blocked`
+
+### GET `/api/contacts/{contactId}/profile`
+
+### POST `/api/contacts/{contactId}/block`
+
+Block toggle. Blocked users cannot send DMs.
+
+### POST `/api/contacts/{contactId}/mute`
+
+Notification mute toggle.
+
+### DELETE `/api/contacts/{contactId}/conversation`
+
+Alias: `/conversation/{contactId}`. Deletes conversation history.
+
+WS: `contact-block-updated`, `contact-profile-updated`, `contact-avatar-updated`, `contact-banner-updated`.
+
+## Presence
+
+### GET `/api/users/status/{userId}`
+
+Alias: `/api/user/status/{userId}`. Your own status: `POST /api/auth/availability-status`.

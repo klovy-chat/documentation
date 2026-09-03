@@ -1,0 +1,169 @@
+---
+title: Kanały
+description: CRUD kanałów, członkowie, zaproszenia, slowmode i lock czatu.
+icon: Hash
+---
+
+Prefiks `/api/channel` (jest też `/api/channels` — ten sam kontroler). Sesja, whitelist, CSRF na mutacjach. Twórca jest jedynym `admin`. Kick, ban, slowmode i lock to on; reszta członków ma composer, dopóki lock nie wstanie.
+
+Historia kanału jest pod tym prefiksem (`get-channel-messages`). Nowej wiadomości tu nie wyślesz — to WS `send-channel-message`.
+
+## Lista i CRUD
+
+### GET `/api/channel/get-user-channels`
+
+Aliasy: `GET /api/channel`, `/list`, `/user-channels`.
+
+```json
+{ "channels": [] }
+```
+
+### POST `/api/channel/create-channel`
+
+Aliasy: `POST /api/channel`, `/create`.
+
+```json
+{
+  "name": "ogolny",
+  "members": ["userId1"]
+}
+```
+
+```json
+{ "channel": { "id": "…", "name": "ogolny" } }
+```
+
+### POST `/api/channel/add-user/{channelId}`
+
+Tylko właściciel. W appce członków zwykle wrzucasz od razu w `create-channel`.
+
+```json
+{ "userIdToAdd": "…" }
+```
+
+### GET `/api/channel/{channelId}/details`
+
+Szczegóły, członkowie, bany, wyciszenia.
+
+### PATCH `/api/channel/{channelId}/name`
+
+```json
+{ "name": "nowa-nazwa" }
+```
+
+### POST `/api/channel/{channelId}/avatar`
+
+`multipart/form-data`, pole `avatar`.
+
+### DELETE `/api/channel/{channelId}/avatar`
+
+### DELETE `/api/channel/delete/{channelId}`
+
+Alias: `DELETE /api/channel/{channelId}`. Tylko właściciel. Kasuje wiadomości trwale.
+
+### POST `/api/channel/leave/{channelId}`
+
+Alias: `POST /api/channel/{channelId}/leave`.
+
+## Moderacja (właściciel)
+
+### POST `/api/channel/{channelId}/kick`
+
+```json
+{ "userId": "…" }
+```
+
+### POST `/api/channel/{channelId}/ban`
+
+```json
+{
+  "userId": "…",
+  "durationSeconds": 3600
+}
+```
+
+Bez `durationSeconds` — ban na stałe. Typowe czasy UI: 5 min → 7 dni.
+
+### POST `/api/channel/{channelId}/unban`
+
+```json
+{ "userId": "…" }
+```
+
+### POST `/api/channel/{channelId}/mute-member`
+
+```json
+{
+  "userId": "…",
+  "durationSeconds": 300
+}
+```
+
+### POST `/api/channel/{channelId}/unmute-member`
+
+```json
+{ "userId": "…" }
+```
+
+### PATCH `/api/channel/{channelId}/slowmode`
+
+```json
+{ "rateLimitPerUser": 10 }
+```
+
+`0` wyłącza tryb wolny (sekundy między wiadomościami).
+
+### PATCH `/api/channel/{channelId}/chat-lock`
+
+```json
+{ "chatLocked": true }
+```
+
+Przy `true` pisze tylko właściciel.
+
+### POST `/api/channel/{channelId}/mute`
+
+Wycisz powiadomienia u siebie. Toggle.
+
+### POST `/api/channel/{channelId}/report`
+
+```json
+{
+  "reason": "spam",
+  "details": "…"
+}
+```
+
+Powody: spam, offensive, harassment, illegal, impersonation, other.
+
+## Zaproszenia
+
+### GET `/api/channel/{channelId}/invites`
+
+### POST `/api/channel/{channelId}/invites`
+
+Aliasy: `/invite`, `/invite-link`.
+
+```json
+{ "maxUses": 50 }
+```
+
+Bez `maxUses` — bez limitu dołączeń.
+
+### DELETE `/api/channel/{channelId}/invites/{inviteId}`
+
+### GET `/api/invites/{inviteId}`
+
+Podgląd (zalogowany). Stany: brak, wygasłe, unieważnione, limit.
+
+### POST `/api/invites/{inviteId}/accept`
+
+Alias: `/join`. Dołącza bieżącego użytkownika.
+
+## Historia kanału (HTTP)
+
+### GET `/api/channel/get-channel-messages/{channelId}`
+
+Aliasy: `/messages/{id}`, `/{id}/messages`. Query: `?before={messageId}&limit=50`.
+
+Wysyłka na żywo: WS `send-channel-message`. Zdarzenia: `channel-added`, `channel-member-joined`, `channel-slowmode-updated`, `channel-chat-locked-updated`, …

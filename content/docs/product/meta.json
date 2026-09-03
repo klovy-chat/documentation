@@ -1,0 +1,23 @@
+{
+  "title": "Produkt",
+  "description": "Kanał, DM, konto, głos — bez zgadywania z Discorda",
+  "icon": "Boxes",
+  "root": true,
+  "pages": [
+    "index",
+    "---Klient---",
+    "installation",
+    "interface",
+    "---Domena---",
+    "account",
+    "messages",
+    "channels",
+    "contacts",
+    "connections",
+    "settings",
+    "---Inne---",
+    "privacy",
+    "faq",
+    "troubleshooting"
+  ]
+}

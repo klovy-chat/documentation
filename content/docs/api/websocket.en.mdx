@@ -1,0 +1,175 @@
+---
+title: WebSocket
+description: Handshake, type/payload frames, encryption, and event catalog.
+icon: Radio
+---
+
+After login the client opens a WebSocket. Handshake reads JWT from cookies. Pending whitelist accounts are rejected — do not connect “just to try”, you will get a reconnect loop.
+
+Query `client=KlovyChatApp` and `wsk` from `POST /api/auth/ws-crypto` are required on production. Without the key the app will not send plaintext. Keepalive `ping` every ~45 s; without it, the proxy cuts the socket and the UI thinks the network died.
+
+`type` names must match exactly in `protocol.ts` and `handlers.rs`. A typo does not give 404. Either silence, or an `error` frame.
+
+```http
+GET /ws?client=KlovyChatApp&wsk=<token from POST /api/auth/ws-crypto>
+Cookie: …access…
+Origin: https://app.klovy.chat
+```
+
+**Production:** `wss://api.klovy.chat/ws`  
+**Local (Vite):** `ws://localhost:5173/ws` (proxy to backend)
+
+Query:
+
+| Parameter | Value |
+| --- | --- |
+| `client` | `KlovyChatApp` |
+| `wsk` | `token` from `POST /api/auth/ws-crypto` |
+
+## Frame key
+
+```http
+POST /api/auth/ws-crypto
+```
+
+```json
+{
+  "token": "…",
+  "key": "…",
+  "expiresIn": 3600
+}
+```
+
+After negotiation, text frames are **AES-GCM**. Logical format (before encryption):
+
+```json
+{
+  "type": "sendMessage",
+  "payload": {}
+}
+```
+
+Keepalive: `ping` → `pong` (client every ~45 s). `type` names must match on both sides (`protocol.ts` ↔ `handlers.rs`).
+
+## Client → server
+
+### `sendMessage` — DM
+
+```json
+{
+  "type": "sendMessage",
+  "payload": {
+    "recipient": "userId",
+    "sender": "userId",
+    "content": "cześć",
+    "messageType": "TEXT",
+    "clientNonce": "uuid",
+    "quotedMessage": "messageId"
+  }
+}
+```
+
+File / GIF: same fields plus `fileUrl`, `fileName`, `fileType`, `fileSize`, optionally `durationMs`. `content` may be the file name.
+
+### `send-channel-message`
+
+Same as above, instead of `recipient`:
+
+```json
+{ "channelId": "channelId" }
+```
+
+Send uses **nonce** (server-side idempotency).
+
+### `editMessage` / `deleteMessage`
+
+```json
+{
+  "type": "editMessage",
+  "payload": {
+    "messageId": "…",
+    "content": "nowy tekst",
+    "userId": "…"
+  }
+}
+```
+
+```json
+{
+  "type": "deleteMessage",
+  "payload": { "messageId": "…", "userId": "…" }
+}
+```
+
+(HTTP: `PUT` / `DELETE /api/messages/{id}` — in the app, edit and delete go via WS.)
+
+### `message-reaction`
+
+```json
+{ "type": "message-reaction", "payload": { "messageId": "…", "emoji": "👍" } }
+```
+
+Max **20** reactions per message.
+
+### Read and typing
+
+| `type` | `payload` |
+| --- | --- |
+| `typing` | `{ "chatId": "…", "isTyping": true }` |
+| `mark-message-read` | `{ "messageId": "…", "userId": "…" }` |
+| `mark-conversation-read` | `{ "userId": "…", "contactId": "…" }` |
+| `mark-channel-read` | `{ "userId": "…", "channelId": "…" }` |
+
+### Presence (rare from client)
+
+`set-online` / `set-offline` / `set-status`. Official client sets status via `POST /api/auth/availability-status`, not duplicated on WS.
+
+### 1:1 calls
+
+Shared shape: `{ "from": "myId", "to": "peerId" }` (invite may add `mode`: `audio` | `video`).
+
+| `type` |
+| --- |
+| `call:invite` |
+| `call:accept` |
+| `call:reject` |
+| `call:cancel` |
+| `call:end` |
+| `call:timeout` |
+
+### Channel voice
+
+| `type` | `payload` |
+| --- | --- |
+| `channel-voice:join` | `{ "channelId": "…" }` |
+| `channel-voice:leave` | `{ "channelId": "…" }` |
+| `channel-voice:state` | `{ "channelId": "…" }` |
+
+## Server → client
+
+| `type` | Meaning |
+| --- | --- |
+| `receiveMessage` / `receive-channel-message` | New message |
+| `message-edited` / `message-deleted` | Mutations |
+| `unread-updated` / `messages-read` / `message-read` | Unread |
+| `message-mention` | Mention |
+| `user-status-changed` | Friend presence |
+| `profile-updated` and avatar/banner variants | Profile |
+| `channel-added` / `channel-left` / `channel-deleted` | Membership |
+| `channel-member-joined` / `channel-member-left` | Member list |
+| `channel-name-updated` / `channel-avatar-updated` | Metadata |
+| `channel-slowmode-updated` / `channel-chat-locked-updated` / `channel-moderation-updated` | Moderation |
+| `friendship-added` / `friendship-removed` | Friends |
+| `contact-block-updated` | Block |
+| `conversation-deleted` | DM history wipe |
+| `call:incoming` `accepted` `rejected` `cancelled` `ended` `unavailable` | Call |
+| `session:revoked` | Remote sign-out |
+| `whitelist:approved` | End of waiting |
+| `announcement:published` | Announcement |
+| `user:warned` / `user:warning-revoked` | Account moderation |
+| `dm-error` / `error` | Operation error |
+| `pong` | Response to `ping` |
+
+<Callout type="info">
+  This is not a bot gateway. If you change a `type` string, you must ship frontend and backend together.
+</Callout>

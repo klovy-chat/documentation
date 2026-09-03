@@ -1,0 +1,198 @@
+---
+title: API Overview
+description: Base URL, headers, and the full REST endpoint list.
+icon: Webhook
+---
+
+**Base (production):** `https://api.klovy.chat`  
+**Base (local):** `http://127.0.0.1:8080`  
+**WebSocket:** `wss://api.klovy.chat/ws` (locally via Vite proxy `/ws`)
+
+These are the same paths the app calls from `src/api/*.ts`. On the other side sits `src/routes/*.rs`. There is no separate bot API, and we are not planning to bolt one on “alongside”. A new endpoint that does not exist in both places simply does not exist — 404 or a dead button.
+
+Request bodies, status codes, and limits are on the subpages. This page is the map so you do not have to hunt for a path across twenty Rust files. Aliases in parentheses work; the canonical ones are those the current frontend uses.
+
+The session lives in HttpOnly cookies, not a Bearer token in `localStorage`. Fetch must use `credentials: include`. JSON both ways. `/api/channel` and `/api/channels` (and similarly message/friend/contact) are aliases to the same controller, because historically the client called singular and plural forms interchangeably.
+
+Every request from the app looks roughly like this:
+
+```http
+X-Klovy-Client: KlovyChatApp/1.0
+X-Klovy-User-Agent: …
+Cookie: …access…; csrf_token=…
+X-CSRF-Token: <same value as csrf_token cookie>
+```
+
+CSRF on `POST` / `PUT` / `PATCH` / `DELETE`. Exceptions: signup, login, login/2fa, refresh. GET/HEAD/OPTIONS without a token. If the cookie and header do not match, you get 403 with `Invalid or missing CSRF token`, not 401.
+
+## Bootstrap
+
+```http
+GET /api
+GET /api/
+GET /
+```
+
+Returns version, flags, limits, WS and app URLs:
+
+```json
+{
+  "klovy": "semver",
+  "ws": "wss://api.klovy.chat/ws",
+  "app": "https://app.klovy.chat",
+  "features": {
+    "captcha": { "enabled": true, "service": "turnstile" },
+    "email": false,
+    "invite_only": false,
+    "cdn": { "enabled": true, "url": "https://cdn.klovy.chat" },
+    "livekit": { "enabled": true, "nodes": [] },
+    "limits": {
+      "global": {
+        "message_reactions": 20,
+        "message_replies": 1,
+        "message_embeds": 1
+      },
+      "default": {
+        "message_length": 2000,
+        "message_attachments": 1
+      }
+    }
+  }
+}
+```
+
+## REST catalog
+
+Canonical paths; aliases in parentheses. Request bodies on the subpages.
+
+### Public / session
+
+| Method | Endpoint | Auth |
+| --- | --- | --- |
+| `GET` | `/api` | no |
+| `GET` | `/api/auth/registration-status` | no |
+| `POST` | `/api/auth/signup` (`/register`) | no + Turnstile |
+| `POST` | `/api/auth/login` (`/sign-in`, `/signin`) | no + Turnstile |
+| `POST` | `/api/auth/login/2fa` | 2FA token + Turnstile |
+| `POST` | `/api/auth/refresh` | refresh cookie |
+| `POST` | `/api/auth/logout` | session |
+| `GET` | `/api/auth/userinfo` (`/me`, `/user`, `/api/auth`) | session |
+| `POST` | `/api/auth/ws-crypto` | session |
+
+### Account
+
+| Method | Endpoint |
+| --- | --- |
+| `POST` | `/api/auth/update-profile` (`/profile`) |
+| `PATCH` | `/api/auth/language` |
+| `POST` | `/api/auth/availability-status` (`/status`) |
+| `POST` | `/api/auth/change-username` |
+| `POST` | `/api/auth/change-password` |
+| `POST` | `/api/auth/add-profile-image` (`/avatar`) |
+| `DELETE` | `/api/auth/remove-profile-image` |
+| `POST` | `/api/auth/add-profile-banner` (`/banner`) |
+| `DELETE` | `/api/auth/remove-profile-banner` |
+| `POST` | `/api/auth/2fa/setup` |
+| `POST` | `/api/auth/2fa/enable` |
+| `POST` | `/api/auth/2fa/disable` |
+| `GET` | `/api/auth/sessions` |
+| `DELETE` | `/api/auth/sessions/{sessionId}` |
+| `POST` | `/api/auth/sessions/revoke-others` |
+| `POST` | `/api/auth/account/disable` |
+| `POST` | `/api/auth/account/request-deletion` |
+| `POST` | `/api/auth/account/cancel-deletion` |
+| `GET` | `/api/auth/warnings` |
+| `POST` | `/api/auth/warnings/acknowledge` |
+| `GET` | `/api/auth/announcements` |
+| `POST` | `/api/auth/announcements/dismiss` |
+
+### Channels
+
+| Method | Endpoint |
+| --- | --- |
+| `GET` | `/api/channel/get-user-channels` |
+| `POST` | `/api/channel/create-channel` |
+| `POST` | `/api/channel/add-user/{id}` |
+| `GET` | `/api/channel/{id}/details` |
+| `PATCH` | `/api/channel/{id}/name` |
+| `POST` | `/api/channel/{id}/avatar` |
+| `DELETE` | `/api/channel/{id}/avatar` |
+| `DELETE` | `/api/channel/delete/{id}` |
+| `POST` | `/api/channel/leave/{id}` |
+| `POST` | `/api/channel/{id}/kick` |
+| `POST` | `/api/channel/{id}/ban` |
+| `POST` | `/api/channel/{id}/unban` |
+| `POST` | `/api/channel/{id}/mute-member` |
+| `POST` | `/api/channel/{id}/unmute-member` |
+| `PATCH` | `/api/channel/{id}/slowmode` |
+| `PATCH` | `/api/channel/{id}/chat-lock` |
+| `POST` | `/api/channel/{id}/mute` |
+| `POST` | `/api/channel/{id}/report` |
+| `GET` | `/api/channel/{id}/invites` |
+| `POST` | `/api/channel/{id}/invites` |
+| `DELETE` | `/api/channel/{id}/invites/{inviteId}` |
+| `GET` | `/api/invites/{inviteId}` |
+| `POST` | `/api/invites/{inviteId}/accept` |
+| `GET` | `/api/channel/get-channel-messages/{id}` |
+
+### Messages
+
+| Method | Endpoint |
+| --- | --- |
+| `POST` | `/api/messages/get-messages` |
+| `POST` | `/api/messages/pinned` |
+| `POST` | `/api/messages/search` |
+| `POST` | `/api/messages/upload-file` |
+| `POST` | `/api/messages/link-preview` |
+| `POST` | `/api/messages/{id}/pin` |
+| `DELETE` | `/api/messages/{id}/pin` |
+| `PUT` | `/api/messages/{id}` |
+| `DELETE` | `/api/messages/{id}` |
+
+Live send: WebSocket `sendMessage` / `send-channel-message`.
+
+### Friends and contacts
+
+| Method | Endpoint |
+| --- | --- |
+| `GET` | `/api/friends/list` |
+| `POST` | `/api/friends/send` |
+| `GET` | `/api/friends/received` |
+| `GET` | `/api/friends/sent` |
+| `GET` | `/api/friends/status/{userId}` |
+| `POST` | `/api/friends/{requestId}/accept` |
+| `POST` | `/api/friends/{requestId}/reject` |
+| `POST` | `/api/friends/{requestId}/cancel` |
+| `DELETE` | `/api/friends/{userId}` |
+| `GET` | `/api/contacts/get-contacts-for-list` (`/list`) |
+| `POST` | `/api/contacts/search` |
+| `GET` | `/api/contacts/blocked` |
+| `GET` | `/api/contacts/{id}/profile` |
+| `POST` | `/api/contacts/{id}/block` |
+| `POST` | `/api/contacts/{id}/mute` |
+| `DELETE` | `/api/contacts/{id}/conversation` |
+| `GET` | `/api/users/status/{userId}` |
+
+### Voice and media
+
+| Method | Endpoint |
+| --- | --- |
+| `POST` | `/api/voice/token` |
+| `GET` | `/api/voice/active` |
+| `GET` | `/api/gifs/trending` |
+| `GET` | `/api/gifs/search?q=` |
+| `GET` | `/api/stickers/trending` |
+| `GET` | `/api/stickers/search?q=` |
+| `GET` | `/api/emojis` |
+
+<Cards>
+  <Card title="Authentication" href="/docs/api/authentication">
+    Login, CSRF, Turnstile, cookies.
+  </Card>
+  <Card title="WebSocket" href="/docs/api/websocket">
+    type/payload frames.
+  </Card>
+  <Card title="Errors" href="/docs/api/errors">
+    HTTP codes and limits.
+  </Card>
+</Cards>

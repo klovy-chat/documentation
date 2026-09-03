@@ -1,0 +1,17 @@
+---
+title: Wiadomości
+description: Send idzie WebSocketem, HTTP to historia i pliki.
+icon: MessageSquare
+---
+
+Szczegóły HTTP: [API wiadomości](/docs/api/messages). Ramki: [WebSocket](/docs/api/websocket). DM i kanał różnią się odbiorcą (`recipient` vs `channelId`), reszta payloadu jest ta sama. W jednym body nie mieszaj obu — backend nie zgadnie.
+
+Max **2000** znaków (to samo wraca w `GET /api`). Typy: `TEXT`, `FILE`, `IMAGE`, `VIDEO`, `AUDIO`, `STICKER`, `CALL`. Przy wysyłce dawaj `clientNonce` (UUID). Bez niego serwer nie zdeduplikuje retry i przy chwiejnym WS dostaniesz dubel. Cytat: `quotedMessage`. Reakcji max 20 na wiadomość. Pogrubienie, kursywa, przekreślenie i kod składa klient — serwer trzyma string, nie AST markdowna.
+
+Nowej wiadomości **nie** wysyłasz REST-em. W appce to `sendMessage` / `send-channel-message`. `PUT` i `DELETE /api/messages/{id}` istnieją, ale edycja i delete z UI idą przez WS. HTTP zostaw na historię, piny, search i upload.
+
+Historia DM: `POST /api/messages/get-messages` `{ id, before?, limit? }` → `{ messages, hasMore }`. Kanał: `GET /api/channel/get-channel-messages/{id}?before=&limit=`. Szukanie treści: `POST /api/messages/search` z `contactId` **albo** `channelId`, min. 2 znaki. Szukajka w sidebarze patrzy tylko na nazwy czatów — jak ktoś wpisze tam fragment wiadomości, nic nie znajdzie i to nie jest bug. Piny: `POST /api/messages/pinned` i `POST`/`DELETE …/{id}/pin`.
+
+Upload: multipart `file`, `contentType`, `contextType` (`dm`|`channel`), `contextId`, ~10 MB. `scanStatus`: `pending` / `clean` / `blocked`. Zablokowany plik na CDN nie wjedzie; UI ma pokazać że skan padł, nie wisieć na spinnerze. GIF i naklejka to URL z `/api/gifs` / stickers, potem ta sama ramka WS z `fileUrl`. Podgląd linku: `POST /api/messages/link-preview` — YouTube, Spotify player. Spotify na profilu nie podpinamy, tylko ten embed.
+
+Na kanale `chatLocked` chowa composer nie-adminowi. `rateLimitPerUser` to sekundy przerwy (`0` wyłącza). Stan dochodzi też ramkami `channel-chat-locked-updated` / `channel-slowmode-updated`, więc nie musisz refetchować details po każdym PATCH. Wzmianki `@user` / `@everyone` / `@here` → `message-mention`. Odczyt: `mark-conversation-read` / `mark-channel-read`. Badge desktopu czyta `(N)` z tytułu — jak zliczysz nieprzeczytane w stanie, ale nie ruszysz `document.title`, Dock zostaje na starym numerze.

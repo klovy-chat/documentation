@@ -1,0 +1,25 @@
+---
+title: Account
+description: Username, Turnstile, 2FA, whitelist, sessions.
+icon: UserRound
+---
+
+You log in with your **username**, not email. We don't collect email at signup — if someone looks for "reset password to inbox", that endpoint doesn't exist. HTTP: [authentication](/docs/api/authentication) and [account](/docs/api/auth).
+
+| | |
+| --- | --- |
+| Username | 3–32, `[a-z0-9_]` |
+| Password | min. 8, upper, lower, digit, char from `@$!%*?&`; breach checks reject leaks |
+| Captcha | Turnstile on production, nothing in DEV |
+| CSRF | not on signup / login / 2fa login / refresh |
+| Session | access + refresh in HttpOnly, `credentials: include` |
+
+Login: `{ username, password, turnstileToken }`. If 2FA is on the account, you don't get a session right away — response is `{ requiresTwoFactor, twoFactorToken }` and you go to `POST /api/auth/login/2fa` with TOTP or a backup code. Whether signup is open at all: `GET /api/auth/registration-status`. On closed signup the UI should show that, not pretend a 400 is a typo in the password.
+
+Whitelist may be enabled. The account exists, cookies are valid, but chat (channels, messages, friends, WS) doesn't work. UI stays on `/pending` until `whitelist:approved` arrives. Don't bypass this in the client — the server would cut scope anyway.
+
+After signup there's `/setup`: `displayName`, `bio`, `color`, avatar (`profile-image` field, ~6 MiB), banner (`profile-banner`, ~7 MiB). Removing a photo is **`DELETE`**, not POST with an empty file. `color` is the avatar background index when there's no photo — don't confuse with theme color.
+
+2FA: `POST /api/auth/2fa/setup` gives secret and `otpauthUrl`. Enable returns `backupCodes` **once**. If you lose them, disabling with password and app code is what's left. Disable and serious account changes (username, password, deletion) want password and TOTP when enabled.
+
+Sessions: `GET /api/auth/sessions`. `DELETE …/{id}` or `POST …/revoke-others` closes WebSocket with frame `session:revoked` — UI should log out, not hang on a dead socket refreshing. Disable account vs delete in 7 days: `account/disable` and `request-deletion` / `cancel-deletion`. Disable blocks login immediately; delete waits a week and can be cancelled.

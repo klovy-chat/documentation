@@ -1,0 +1,20 @@
+{
+  "title": "API",
+  "description": "REST and WebSocket",
+  "icon": "Webhook",
+  "root": true,
+  "pages": [
+    "index",
+    "authentication",
+    "---Resources---",
+    "auth",
+    "channels",
+    "messages",
+    "contacts-friends",
+    "voice",
+    "media",
+    "---Realtime---",
+    "websocket",
+    "errors"
+  ]
+}

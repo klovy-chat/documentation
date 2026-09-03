@@ -1,0 +1,198 @@
+---
+title: Przegląd API
+description: Baza URL, nagłówki i pełna lista endpointów REST.
+icon: Webhook
+---
+
+**Baza (produkcja):** `https://api.klovy.chat`  
+**Baza (lokalnie):** `http://127.0.0.1:8080`  
+**WebSocket:** `wss://api.klovy.chat/ws` (lokalnie Vite proxy `/ws`)
+
+To są te same ścieżki, które woła appka z `src/api/*.ts`. Po drugiej stronie siedzi `src/routes/*.rs`. Osobnego API dla botów nie ma i nie planujemy go doklejać „obok”. Nowy endpoint, którego nie ma w obu miejscach, po prostu nie istnieje — 404 albo martwy przycisk.
+
+Body, kody i limity są na podstronach. Tu jest mapa, żeby nie szukać pathu w dwudziestu plikach Rusta. Aliasy w nawiasie działają, kanoniczne są te, których używa obecny frontend.
+
+Sesja to ciasteczka HttpOnly, nie Bearer w `localStorage`. Fetch musi iść z `credentials: include`. JSON w obie strony. `/api/channel` i `/api/channels` (i analogicznie message/friend/contact) to aliasy na ten sam kontroler, bo historycznie klient wzywał raz pojedynczą, raz mnogą.
+
+Każde żądanie z appki wygląda mniej więcej tak:
+
+```http
+X-Klovy-Client: KlovyChatApp/1.0
+X-Klovy-User-Agent: …
+Cookie: …access…; csrf_token=…
+X-CSRF-Token: <ta sama wartość co cookie csrf_token>
+```
+
+CSRF na `POST` / `PUT` / `PATCH` / `DELETE`. Wyjątki: signup, login, login/2fa, refresh. GET/HEAD/OPTIONS bez tokena. Jak cookie i nagłówek się rozjadą, dostaniesz 403 z `Invalid or missing CSRF token`, nie 401.
+
+## Bootstrap
+
+```http
+GET /api
+GET /api/
+GET /
+```
+
+Zwraca wersję, flagi, limity, URL-e WS i aplikacji:
+
+```json
+{
+  "klovy": "semver",
+  "ws": "wss://api.klovy.chat/ws",
+  "app": "https://app.klovy.chat",
+  "features": {
+    "captcha": { "enabled": true, "service": "turnstile" },
+    "email": false,
+    "invite_only": false,
+    "cdn": { "enabled": true, "url": "https://cdn.klovy.chat" },
+    "livekit": { "enabled": true, "nodes": [] },
+    "limits": {
+      "global": {
+        "message_reactions": 20,
+        "message_replies": 1,
+        "message_embeds": 1
+      },
+      "default": {
+        "message_length": 2000,
+        "message_attachments": 1
+      }
+    }
+  }
+}
+```
+
+## Katalog REST
+
+Kanoniczne ścieżki, aliasy w nawiasie. Body na podstronach.
+
+### Publiczne / sesja
+
+| Metoda | Endpoint | Auth |
+| --- | --- | --- |
+| `GET` | `/api` | nie |
+| `GET` | `/api/auth/registration-status` | nie |
+| `POST` | `/api/auth/signup` (`/register`) | nie + Turnstile |
+| `POST` | `/api/auth/login` (`/sign-in`, `/signin`) | nie + Turnstile |
+| `POST` | `/api/auth/login/2fa` | token 2FA + Turnstile |
+| `POST` | `/api/auth/refresh` | cookie refresh |
+| `POST` | `/api/auth/logout` | sesja |
+| `GET` | `/api/auth/userinfo` (`/me`, `/user`, `/api/auth`) | sesja |
+| `POST` | `/api/auth/ws-crypto` | sesja |
+
+### Konto
+
+| Metoda | Endpoint |
+| --- | --- |
+| `POST` | `/api/auth/update-profile` (`/profile`) |
+| `PATCH` | `/api/auth/language` |
+| `POST` | `/api/auth/availability-status` (`/status`) |
+| `POST` | `/api/auth/change-username` |
+| `POST` | `/api/auth/change-password` |
+| `POST` | `/api/auth/add-profile-image` (`/avatar`) |
+| `DELETE` | `/api/auth/remove-profile-image` |
+| `POST` | `/api/auth/add-profile-banner` (`/banner`) |
+| `DELETE` | `/api/auth/remove-profile-banner` |
+| `POST` | `/api/auth/2fa/setup` |
+| `POST` | `/api/auth/2fa/enable` |
+| `POST` | `/api/auth/2fa/disable` |
+| `GET` | `/api/auth/sessions` |
+| `DELETE` | `/api/auth/sessions/{sessionId}` |
+| `POST` | `/api/auth/sessions/revoke-others` |
+| `POST` | `/api/auth/account/disable` |
+| `POST` | `/api/auth/account/request-deletion` |
+| `POST` | `/api/auth/account/cancel-deletion` |
+| `GET` | `/api/auth/warnings` |
+| `POST` | `/api/auth/warnings/acknowledge` |
+| `GET` | `/api/auth/announcements` |
+| `POST` | `/api/auth/announcements/dismiss` |
+
+### Kanały
+
+| Metoda | Endpoint |
+| --- | --- |
+| `GET` | `/api/channel/get-user-channels` |
+| `POST` | `/api/channel/create-channel` |
+| `POST` | `/api/channel/add-user/{id}` |
+| `GET` | `/api/channel/{id}/details` |
+| `PATCH` | `/api/channel/{id}/name` |
+| `POST` | `/api/channel/{id}/avatar` |
+| `DELETE` | `/api/channel/{id}/avatar` |
+| `DELETE` | `/api/channel/delete/{id}` |
+| `POST` | `/api/channel/leave/{id}` |
+| `POST` | `/api/channel/{id}/kick` |
+| `POST` | `/api/channel/{id}/ban` |
+| `POST` | `/api/channel/{id}/unban` |
+| `POST` | `/api/channel/{id}/mute-member` |
+| `POST` | `/api/channel/{id}/unmute-member` |
+| `PATCH` | `/api/channel/{id}/slowmode` |
+| `PATCH` | `/api/channel/{id}/chat-lock` |
+| `POST` | `/api/channel/{id}/mute` |
+| `POST` | `/api/channel/{id}/report` |
+| `GET` | `/api/channel/{id}/invites` |
+| `POST` | `/api/channel/{id}/invites` |
+| `DELETE` | `/api/channel/{id}/invites/{inviteId}` |
+| `GET` | `/api/invites/{inviteId}` |
+| `POST` | `/api/invites/{inviteId}/accept` |
+| `GET` | `/api/channel/get-channel-messages/{id}` |
+
+### Wiadomości
+
+| Metoda | Endpoint |
+| --- | --- |
+| `POST` | `/api/messages/get-messages` |
+| `POST` | `/api/messages/pinned` |
+| `POST` | `/api/messages/search` |
+| `POST` | `/api/messages/upload-file` |
+| `POST` | `/api/messages/link-preview` |
+| `POST` | `/api/messages/{id}/pin` |
+| `DELETE` | `/api/messages/{id}/pin` |
+| `PUT` | `/api/messages/{id}` |
+| `DELETE` | `/api/messages/{id}` |
+
+Wysyłka na żywo: WebSocket `sendMessage` / `send-channel-message`.
+
+### Znajomi i kontakty
+
+| Metoda | Endpoint |
+| --- | --- |
+| `GET` | `/api/friends/list` |
+| `POST` | `/api/friends/send` |
+| `GET` | `/api/friends/received` |
+| `GET` | `/api/friends/sent` |
+| `GET` | `/api/friends/status/{userId}` |
+| `POST` | `/api/friends/{requestId}/accept` |
+| `POST` | `/api/friends/{requestId}/reject` |
+| `POST` | `/api/friends/{requestId}/cancel` |
+| `DELETE` | `/api/friends/{userId}` |
+| `GET` | `/api/contacts/get-contacts-for-list` (`/list`) |
+| `POST` | `/api/contacts/search` |
+| `GET` | `/api/contacts/blocked` |
+| `GET` | `/api/contacts/{id}/profile` |
+| `POST` | `/api/contacts/{id}/block` |
+| `POST` | `/api/contacts/{id}/mute` |
+| `DELETE` | `/api/contacts/{id}/conversation` |
+| `GET` | `/api/users/status/{userId}` |
+
+### Głos i media
+
+| Metoda | Endpoint |
+| --- | --- |
+| `POST` | `/api/voice/token` |
+| `GET` | `/api/voice/active` |
+| `GET` | `/api/gifs/trending` |
+| `GET` | `/api/gifs/search?q=` |
+| `GET` | `/api/stickers/trending` |
+| `GET` | `/api/stickers/search?q=` |
+| `GET` | `/api/emojis` |
+
+<Cards>
+  <Card title="Uwierzytelnianie" href="/docs/api/authentication">
+    Login, CSRF, Turnstile, ciasteczka.
+  </Card>
+  <Card title="WebSocket" href="/docs/api/websocket">
+    Ramki type/payload.
+  </Card>
+  <Card title="Błędy" href="/docs/api/errors">
+    Kody HTTP i limity.
+  </Card>
+</Cards>

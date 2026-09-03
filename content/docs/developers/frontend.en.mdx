@@ -1,0 +1,35 @@
+---
+title: Frontend
+description: React + Vite on app.klovy.chat.
+icon: PanelTop
+---
+
+Repo: [klovy-chat/frontend](https://github.com/klovy-chat/frontend). In production this is Cloudflare Workers, deploy via `wrangler`. Locally Vite on `127.0.0.1:5173`. Proxy catches `/api`, `/whitelist`, and `/ws`, so in DEV you do not point the browser at `:8080` unless you are debugging the backend itself.
+
+The stack is boring on purpose: React 18, TypeScript, Vite 8, React Router, i18next (PL and EN), LiveKit client. We wire Turnstile only in production — in DEV you can send an empty token field or skip captcha entirely; the backend does not require it in `development`.
+
+```
+src/
+├── pages/          Login, Signup, ProfileSetup, PendingApproval, Chat, Invite
+├── settings/       panel, English slugs
+├── components/     chat, channels, call
+├── context/        Auth, WebSocket, presence, call
+├── api/            HTTP + protocol.ts
+├── crypto/         content envelope, WS frames
+└── languages/      pl.json, en.json
+```
+
+`pages/` are screens. `api/` is the only place allowed to hit the backend — do not `fetch('/api/...')` in a component "because it is faster". `protocol.ts` holds WS frame strings; add a `type` only there and the server does not know it. UI strings always in both JSON files, otherwise EN shows a key or blank.
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_BACKEND_URL` | locally `http://127.0.0.1:8080` |
+| `VITE_CDN_BASE_URL` | where to fetch attachments after scan |
+| `VITE_TURNSTILE_SITE_KEY` | empty in DEV; prod `vite build` must have it |
+| `VITE_LIVEKIT_ALLOWED_HOSTS` | e.g. `*.livekit.cloud` |
+
+Production build fails with `http://` in `VITE_BACKEND_URL`. Turnstile must be set too, even when you test preview.
+
+New HTTP endpoint: file in `src/api` **and** route in the backend. New WS frame: `protocol.ts` **and** `handlers.rs`. New settings tab: entry in `settings/routes.ts` (EN slug, label from i18n).
+
+Every request from the app sends `X-Klovy-Client: KlovyChatApp/1.0`. Middleware and CORS keep an allowlist — without that header on production you often get silence or 403, not a nice JSON error. There is also `X-Klovy-User-Agent` (browser or Tauri). Session goes via cookies, so `credentials: include` lives in `api/client.ts`; do not add it "for safety" a second time.

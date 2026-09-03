@@ -1,0 +1,34 @@
+---
+title: Getting started
+description: Where the code lives and where to start reading.
+icon: Sparkles
+---
+
+Klovy Chat is not a single repo with workspaces. Frontend, backend, desktop, and the product site live separately, each with its own README, license, and pipeline. If you clone only one piece, the rest still has to live somewhere — locally usually side by side, in production on separate hosts. These docs are another folder too; they do not sit in `frontend/docs`.
+
+The app at [app.klovy.chat](https://app.klovy.chat) talks to the API over REST and WebSocket. We do not expose a bot API, there is no OAuth for third-party apps, and there are no webhooks or slash commands. If someone is looking for "how to write a bot for Klovy", that is not here and not in this code.
+
+<Cards>
+  <Card title="Stack" href="/docs/developers">
+    Architecture, env, map of `src/`.
+  </Card>
+  <Card title="API" href="/docs/api">
+    Paths, bodies, CSRF, WS frames.
+  </Card>
+  <Card title="Product" href="/docs/product">
+    Channels, DMs, account, voice — how it fits together.
+  </Card>
+</Cards>
+
+If this is your first time: [spin up frontend and backend](/docs/developers/local-setup). Mongo has to be running, otherwise `cargo run` will not even get to the bind. Then skim [architecture](/docs/developers/architecture), because Axum and Actix sit in the same binary and it is easy to mix up what is the "edge". A new endpoint is always two places: `src/api` on the frontend and `src/routes` on the backend. WebSocket frame types live in `protocol.ts` and `ws/handlers.rs` — change the string on one side and the other goes silent or throws `error`.
+
+We are in public beta. Features move. If this page disagrees with the code, trust GitHub, not the copy on [klovy.chat](https://klovy.chat).
+
+| Repo | What is in it |
+| --- | --- |
+| [frontend](https://github.com/klovy-chat/frontend) | React, Vite, what you see on app.klovy.chat |
+| [backend](https://github.com/klovy-chat/backend) | Rust, REST and WS on api.klovy.chat |
+| [application](https://github.com/klovy-chat/application) | Tauri; loads the same frontend, no second UI |
+| [website](https://github.com/klovy-chat/website) | Landing, download, blog |
+
+Passwords go through Argon2, session in HttpOnly cookies, browser mutations via CSRF, attachments through ClamAV. **There is no E2EE.** The server sees message content because search, pins, and moderation depend on it. WS frames after `POST /api/auth/ws-crypto` still run AES-GCM, but that is transport, not Signal. More detail: [privacy](/docs/product/privacy) and [security](/docs/developers/security).

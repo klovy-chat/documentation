@@ -1,0 +1,18 @@
+{
+  "title": "Stack",
+  "description": "Repo, setup i jak to jest poskładane",
+  "icon": "Code",
+  "root": true,
+  "pages": [
+    "index",
+    "architecture",
+    "local-setup",
+    "---Repozytoria---",
+    "frontend",
+    "backend",
+    "desktop",
+    "---Proces---",
+    "security",
+    "contribution"
+  ]
+}

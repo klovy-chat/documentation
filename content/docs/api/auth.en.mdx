@@ -1,0 +1,156 @@
+---
+title: Auth and account
+description: Profile, 2FA, sessions, status, warnings, and account deletion.
+icon: UserCog
+---
+
+Session + CSRF on mutations, unless stated otherwise. Prefix `/api/auth`. Language is `PATCH`, status is `POST`, removing a photo is `DELETE` — people mix up those three methods on their first client.
+
+`code` in the body (TOTP) only when 2FA is enabled. If you send it “just in case” on an account without 2FA, validation may reject it. Backup codes from `enable` are shown once; do not log them.
+
+## Profile
+
+### POST `/api/auth/update-profile`
+
+Alias: `/profile`.
+
+```json
+{
+  "displayName": "Jan Kowalski",
+  "bio": "…",
+  "color": 0
+}
+```
+
+`color` — avatar color index (when there is no photo).
+
+### PATCH `/api/auth/language`
+
+```json
+{ "language": "pl" }
+```
+
+Values: `pl` | `en`.
+
+### POST `/api/auth/availability-status`
+
+Alias: `/status`.
+
+```json
+{ "availabilityStatus": "online" }
+```
+
+Values: `online` | `away` | `brb` | `dnd`.
+
+### POST `/api/auth/change-username`
+
+```json
+{
+  "username": "nowa_nazwa",
+  "password": "…",
+  "code": "123456"
+}
+```
+
+`code` only when 2FA is enabled.
+
+### POST `/api/auth/change-password`
+
+```json
+{
+  "currentPassword": "…",
+  "newPassword": "…",
+  "code": "123456"
+}
+```
+
+`code` only when 2FA is enabled.
+
+### POST `/api/auth/add-profile-image`
+
+Aliases: `/profile-image`, `/avatar`. `multipart/form-data`, field `profile-image`, limit ~6 MiB.
+
+### DELETE `/api/auth/remove-profile-image`
+
+### POST `/api/auth/add-profile-banner`
+
+Aliases: `/profile-banner`, `/banner`. Field `profile-banner`, limit ~7 MiB.
+
+### DELETE `/api/auth/remove-profile-banner`
+
+## 2FA
+
+### POST `/api/auth/2fa/setup`
+
+```json
+{ "password": "…" }
+```
+
+```json
+{
+  "secret": "BASE32…",
+  "otpauthUrl": "otpauth://totp/…"
+}
+```
+
+### POST `/api/auth/2fa/enable`
+
+```json
+{ "password": "…", "code": "123456" }
+```
+
+Returns `backupCodes` — show them once and do not stash them in logs.
+
+### POST `/api/auth/2fa/disable`
+
+```json
+{ "password": "…", "code": "123456" }
+```
+
+## Sessions
+
+### GET `/api/auth/sessions`
+
+List of signed-in devices.
+
+### DELETE `/api/auth/sessions/{sessionId}`
+
+Sign out the given session. The current one gets WS `session:revoked`.
+
+### POST `/api/auth/sessions/revoke-others`
+
+All except the current one.
+
+## Account
+
+### POST `/api/auth/account/disable`
+
+Immediately blocks login. An administrator can restore it.
+
+```json
+{ "password": "…", "code": "123456" }
+```
+
+`code` only with 2FA.
+
+### POST `/api/auth/account/request-deletion`
+
+Deletion in 7 days. Can be cancelled until then. Body same as above.
+
+### POST `/api/auth/account/cancel-deletion`
+
+```json
+{ "password": "…", "code": "123456" }
+```
+
+## Warnings and announcements
+
+### GET `/api/auth/warnings`
+
+### POST `/api/auth/warnings/acknowledge`
+
+### GET `/api/auth/announcements`
+
+### POST `/api/auth/announcements/dismiss`
+
+Separate rate limiters: login, signup, 2FA, password, username, upload, status.

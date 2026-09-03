@@ -1,0 +1,35 @@
+---
+title: Stack
+description: Repo, mapa kodu i jak to odpalić.
+icon: Code
+---
+
+Trzy główne repo obok siebie, nie jeden tree z workspaces. README w każdym z nich bywa nowsze niż marketing, więc jak coś tu zgrzyta, otwórz plik w kodzie. Ta strona docs też potrafi zostać w tyle — wtedy wygrywa GitHub.
+
+Frontend to to, co ludzie klikają. Backend trzyma sesje, wiadomości, kanały i WebSocket. Desktop to okno Tauri wokół tego samego frontendu — nie kopiujemy komponentów do Rusta. Strona [klovy.chat](https://klovy.chat) jest czwartym repo i nie wchodzi w runtime czatu. Docs, które czytasz, to osobny folder (`klovy-chat-documentation`), nie leżą w frontendzie.
+
+Jak nie wiesz od czego zacząć: [lokalne środowisko](/docs/developers/local-setup). Mongo musi wstać, inaczej `cargo run` nawet nie dojdzie do bindu. Jak request nie dochodzi: [backend](/docs/developers/backend) i CORS w `.env` — najczęściej `localhost` vs `127.0.0.1`. Jak dodajesz przycisk w UI: [frontend](/docs/developers/frontend). Nowy endpoint zawsze w dwóch miejscach, nowa ramka WS też (`protocol.ts` i `handlers.rs`).
+
+<Cards>
+  <Card title="Architektura" href="/docs/developers/architecture">
+    Axum na brzegu, Actix w środku, LiveKit obok.
+  </Card>
+  <Card title="Lokalne środowisko" href="/docs/developers/local-setup">
+    `cargo run` + Vite na :5173.
+  </Card>
+  <Card title="Frontend" href="/docs/developers/frontend">
+    `src/api`, trasy, `protocol.ts`.
+  </Card>
+  <Card title="Backend" href="/docs/developers/backend">
+    `routes/` → `controllers/`, middleware, `.env`.
+  </Card>
+  <Card title="Desktop" href="/docs/developers/desktop">
+    Tauri 2, instalatory, updater.
+  </Card>
+  <Card title="Bezpieczeństwo" href="/docs/developers/security">
+    CSRF, sesje, zgłaszanie luk.
+  </Card>
+  <Card title="Kontrybucja" href="/docs/developers/contribution">
+    Fork, PR, licencja.
+  </Card>
+</Cards>

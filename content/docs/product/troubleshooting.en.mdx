@@ -1,0 +1,21 @@
+---
+title: Debug
+description: CORS, WS, ClamAV, LiveKit, Tauri — what fails most often.
+icon: Wrench
+---
+
+First: backend is up, Mongo in `.env`, `ORIGIN` / `FRONTEND_URL` = Vite origin. Mixing `localhost` and `127.0.0.1` is classic CORS, not "broken login". [Setup](/docs/developers/local-setup).
+
+You log in with **username**. Adblock on Cloudflare scripts kills Turnstile and signup on prod looks like a bad password. `403` with `Invalid or missing CSRF token` = cookie and header don't match; GET doesn't want CSRF, mutations do. Closed signup shows in `registration-status`. `401` → `POST /api/auth/refresh` (no CSRF) and retry the original request. If refresh is also 401, session is dead — don't spin a loop.
+
+Without `X-Klovy-Client: KlovyChatApp/1.0` or with wrong Origin the request dies at the edge, often without nice JSON. Remember `credentials: include`. `429` is separate for login, signup, 2FA, upload, pins, search — don't hardcode thresholds; use `retryAfter` when the server sends it.
+
+WS: session cookie + `?client=KlovyChatApp&wsk=`. Pending → don't connect. "Privacy" extensions love killing the socket. On prod without key from `ws-crypto` the client won't send plaintext. If a frame reaches the server and nothing comes back, check whether `type` is identical in `protocol.ts` and `handlers.rs` — a typo doesn't give 404, just silence or `error`.
+
+Upload: ~10 MB, MIME, `blocked` after ClamAV. Dummy R2 starts the process; a real file on prod needs a bucket. 502/503/504 the client retries a few times; 400 from validation doesn't.
+
+LiveKit: token OK but silence = host off allowlist or no getUserMedia. On a channel you must `channel-voice:join`; opening chat alone doesn't connect audio.
+
+Tauri: WebView2 / WebKitGTK. Badge and updater on the installer, not in `tauri dev`. Title `(N) Klovy Chat`. Blank window on Windows almost always means missing WebView2.
+
+In issues: OS, web or desktop, roughly when, backend log without secrets. Vulnerabilities only through Advisories.

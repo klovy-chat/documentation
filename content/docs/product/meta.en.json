@@ -1,0 +1,23 @@
+{
+  "title": "Product",
+  "description": "Channels, DMs, accounts, voice — without guessing from Discord",
+  "icon": "Boxes",
+  "root": true,
+  "pages": [
+    "index",
+    "---Client---",
+    "installation",
+    "interface",
+    "---Domain---",
+    "account",
+    "messages",
+    "channels",
+    "contacts",
+    "connections",
+    "settings",
+    "---Other---",
+    "privacy",
+    "faq",
+    "troubleshooting"
+  ]
+}

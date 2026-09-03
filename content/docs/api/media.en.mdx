@@ -1,0 +1,57 @@
+---
+title: GIFs, stickers, emoji
+description: Giphy proxy and emoji library through the Klovy backend.
+icon: Smile
+---
+
+The Giphy key stays on the server. The client only calls our backend. Session required. Do not paste the key into Vite and do not hit api.giphy.com from the browser — CORS will block you anyway, and the key will leak in the bundle.
+
+GIF and sticker are URLs. Sending to chat is still a WS frame with `fileUrl`, not a separate “send gif” POST.
+
+## GIFs — `/api/gifs`
+
+Alias: `/api/gif`.
+
+### GET `/api/gifs/trending`
+
+Query: `limit` (default 24), `lang` (`pl` | `en`).
+
+```json
+{
+  "gifs": [
+    {
+      "id": "…",
+      "title": "…",
+      "url": "https://…",
+      "preview": "https://…",
+      "width": 480,
+      "height": 270
+    }
+  ]
+}
+```
+
+Trending aliases: `GET /api/gifs`, `/trends`.
+
+### GET `/api/gifs/search`
+
+```http
+GET /api/gifs/search?q=kot&limit=24&lang=pl
+```
+
+Search rate limiter (`discovery_limiter`).
+
+## Stickers — `/api/stickers`
+
+Same as GIFs:
+
+| Method | Endpoint |
+| --- | --- |
+| `GET` | `/api/stickers/trending` (`/`, `/trends`) |
+| `GET` | `/api/stickers/search?q=` |
+
+## Emoji — `/api/emojis`
+
+### GET `/api/emojis`
+
+Alias: `/api/emoji`. Library for the picker (standard + optional server sets).

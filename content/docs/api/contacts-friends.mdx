@@ -1,0 +1,108 @@
+---
+title: Kontakty i znajomi
+description: Zaproszenia, lista znajomych, blokady i profile.
+icon: UserPlus
+---
+
+`/api/friends` (też `/api/friend`) i `/api/contacts` (`/api/contact`). Sesja, whitelist. Znajomi to zaproszenia i relacja. Kontakty to lista DM, blokada, mute i wipe historii. `DELETE /api/friends/{id}` kasuje znajomego **i** historię — wipe samej rozmowy to `DELETE` na contacts.
+
+Szukanie: `{ searchTerm }`, nie `query`. Lista w oficjalnym kliencie: `/api/contacts/get-contacts-for-list`.
+
+## Znajomi
+
+### GET `/api/friends/list`
+
+Alias: `GET /api/friends`.
+
+```json
+{ "friends": [] }
+```
+
+### POST `/api/friends/send`
+
+Aliasy: `/request`, `POST /api/friends`.
+
+```json
+{ "username": "jan_kowalski" }
+```
+
+Bez `@`. Możliwe `autoAccepted` gdy druga strona już wysłała zaproszenie.
+
+### GET `/api/friends/received`
+
+Alias: `/requests/received`.
+
+```json
+{ "requests": [] }
+```
+
+### GET `/api/friends/sent`
+
+Alias: `/requests/sent`.
+
+### GET `/api/friends/status/{otherUserId}`
+
+```json
+{
+  "isFriend": false,
+  "isBlockedByMe": false,
+  "isBlockedByOther": false,
+  "pendingRequest": { "direction": "outgoing", "requestId": "…" }
+}
+```
+
+### POST `/api/friends/{requestId}/accept`
+
+```json
+{ "message": "…", "friend": {} }
+```
+
+### POST `/api/friends/{requestId}/reject`
+
+### POST `/api/friends/{requestId}/cancel`
+
+### DELETE `/api/friends/{friendUserId}`
+
+Usuwa znajomego i **historię DM**.
+
+WS: `friendship-added`, `friendship-removed`.
+
+## Kontakty (lista DM)
+
+### GET `/api/contacts/get-contacts-for-list`
+
+Aliasy: `GET /api/contacts`, `/list`. Oficjalny klient używa `/get-contacts-for-list`.
+
+```json
+{ "contacts": [] }
+```
+
+### POST `/api/contacts/search`
+
+```json
+{ "searchTerm": "jan" }
+```
+
+### GET `/api/contacts/blocked`
+
+### GET `/api/contacts/{contactId}/profile`
+
+### POST `/api/contacts/{contactId}/block`
+
+Toggle blokady. Zablokowany nie wyśle DM.
+
+### POST `/api/contacts/{contactId}/mute`
+
+Toggle wyciszenia powiadomień.
+
+### DELETE `/api/contacts/{contactId}/conversation`
+
+Alias: `/conversation/{contactId}`. Kasuje historię rozmowy.
+
+WS: `contact-block-updated`, `contact-profile-updated`, `contact-avatar-updated`, `contact-banner-updated`.
+
+## Obecność
+
+### GET `/api/users/status/{userId}`
+
+Alias: `/api/user/status/{userId}`. Własny status: `POST /api/auth/availability-status`.

@@ -1,0 +1,30 @@
+---
+title: Desktop app
+description: Tauri 2 — installers, updater, badge.
+icon: AppWindow
+---
+
+Repo: [klovy-chat/application](https://github.com/klovy-chat/application). This is a shell. There is no React chat here, we do not copy `src/components`. The window loads [app.klovy.chat](https://app.klovy.chat) (or a URL from config in DEV). Break the layout and the PR goes to frontend. Here you only touch the window, badge, updater, signing, and installers.
+
+| OS | Output |
+| --- | --- |
+| Windows | `.msi` / NSIS, plus Microsoft Store variant |
+| macOS | `.dmg` universal (Intel + Apple Silicon), App Store variant |
+| Linux | `.deb`, `.rpm`, `.AppImage` |
+
+There is no Android or iOS in this repo and we are not bolting them on here. Mobile browser is the same frontend, just a tighter layout.
+
+```bash
+npm run dev                 # current OS
+npm run build:windows
+npm run build:windows:store
+npm run build:macos
+npm run build:macos-appstore
+npm run build:linux
+```
+
+Main file is `src-tauri/tauri.conf.json`. Per-store / OS overrides sit next to it (`tauri.windows.conf.json`, etc.). Window and plugin permissions: `src-tauri/capabilities/`. When you add a native call, check whether the capability allows it — Tauri 2 stays quiet instead of failing loudly.
+
+Updater on the GitHub installer pulls `latest.json` from Releases. Store variant has those endpoints empty because the store updates. Badge calls `set_unread_badge` and **reads the count from the page title**, e.g. `(3) Klovy Chat`. Frontend sets `document.title`. Change the format to `Klovy Chat — 3` or add another parenthesis and the badge stops matching and nobody knows why until they look at this contract. Discord Rich Presence is a plugin, not a separate service.
+
+Releases are done by maintainers: `npm run release` / `release:minor` or the **Release** workflow. CI tags, builds, signs with `TAURI_SIGNING_PRIVATE_KEY`, and uploads artifacts. GitHub Release must be **public**. A private draft shows up as 404 to the updater.

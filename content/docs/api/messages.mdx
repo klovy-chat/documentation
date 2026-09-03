@@ -1,0 +1,117 @@
+---
+title: Wiadomości
+description: Historia, edycja, usuwanie, piny, wyszukiwanie i upload.
+icon: Mail
+---
+
+Prefiks `/api/messages` (alias `/api/message`). Sesja i whitelist. Nowej wiadomości tu nie wyślesz — to WS. HTTP jest od historii, pinów, searchu i plików. W appce edycja i delete też idą ramkami; `PUT`/`DELETE` na tym prefiksie istnieją, jak piszesz własny klient.
+
+Typy: `TEXT`, `FILE`, `IMAGE`, `VIDEO`, `AUDIO`, `STICKER`, `CALL`. Treść max 2000 znaków. Przy sendzie dawaj `clientNonce`, inaczej retry na chwiejnym sockecie zrobi dubel. Search chce `contactId` albo `channelId`, nie obu naraz.
+
+## Historia
+
+### POST `/api/messages/get-messages`
+
+Aliasy: `POST /api/messages`, `/list`.
+
+DM:
+
+```json
+{
+  "id": "contactUserId",
+  "before": "messageId",
+  "limit": 50
+}
+```
+
+```json
+{
+  "messages": [],
+  "hasMore": true
+}
+```
+
+Historia kanału: `GET /api/channel/get-channel-messages/{channelId}?before=&limit=`.
+
+### POST `/api/messages/pinned`
+
+```json
+{ "contactId": "…" }
+```
+
+albo `{ "channelId": "…" }`.
+
+### POST `/api/messages/search`
+
+Min. 2 znaki.
+
+```json
+{
+  "query": "hasło",
+  "contactId": "…",
+  "channelId": "…"
+}
+```
+
+Podaj `contactId` **albo** `channelId`.
+
+## Mutacje
+
+### PUT `/api/messages/{messageId}`
+
+Edycja własnej wiadomości. W appce idzie to ramką `editMessage`.
+
+```json
+{ "content": "nowy tekst" }
+```
+
+### DELETE `/api/messages/{messageId}`
+
+Miękkie usunięcie. W appce ramka `deleteMessage`.
+
+### POST `/api/messages/{messageId}/pin`
+
+### DELETE `/api/messages/{messageId}/pin`
+
+Osobny limiter pinów.
+
+## Pliki i linki
+
+### POST `/api/messages/upload-file`
+
+Aliasy: `/upload`, `/file`. `multipart/form-data`:
+
+| Pole | Wartość |
+| --- | --- |
+| `file` | plik (max ~10 MB) |
+| `contentType` | MIME |
+| `contextType` | `dm` lub `channel` |
+| `contextId` | id kontaktu albo kanału |
+
+```json
+{
+  "filePath": "…",
+  "scanStatus": "pending"
+}
+```
+
+`scanStatus`: `pending` | `clean` | `blocked` (ClamAV). Zablokowany plik nie trafia na CDN.
+
+### POST `/api/messages/link-preview`
+
+```json
+{ "url": "https://open.spotify.com/track/…" }
+```
+
+## Realtime (nie REST)
+
+| WS `type` | Rola |
+| --- | --- |
+| `sendMessage` | nowa DM |
+| `send-channel-message` | kanał |
+| `editMessage` / `deleteMessage` | mutacje |
+| `message-reaction` | reakcja (max 20 na wiadomość) |
+| `receiveMessage` / `receive-channel-message` | odbiór |
+| `message-mention` | wzmianka |
+
+Szczegóły: [WebSocket](/docs/api/websocket).

@@ -1,0 +1,49 @@
+---
+title: FAQ
+description: Things people ask on their first PR.
+icon: Info
+---
+
+## Bot API? OAuth? Webhooks?
+
+No. This is the Klovy client API — same paths as in `src/api`. There is no separate gateway for bots and we're not bolting one on "because Discord has it".
+
+## Why username, not email?
+
+That's how accounts work. We don't collect email at signup; no inbox reset either. Whether signup is open: `GET /api/auth/registration-status`.
+
+## Session works, chat is dead
+
+Whitelist. Stay on `/pending`, don't open WS. Server opens chat scope after `whitelist:approved`. Handshake before that fails anyway and logs show reconnect every second.
+
+## Add servers and roles like Discord?
+
+No. Channel = group, one `admin` (creator). No bots, roles, or public channel directory either.
+
+## Send messages with POST?
+
+Not in the app. History and upload over HTTP; send on WS with `clientNonce`. `PUT`/`DELETE /api/messages/{id}` exist; UI still uses frames.
+
+## Language and slowmode — POST or PATCH?
+
+Language: `PATCH /api/auth/language`. Slowmode and lock: `PATCH`. Remove avatar: `DELETE`, not POST with null.
+
+## Contact search with `query` field?
+
+No. `{ "searchTerm": "…" }`. DM list: `/api/contacts/get-contacts-for-list`, not bare `/api/contacts` — alias exists, official client calls the longer path.
+
+## Giphy key on the frontend?
+
+No. `GET /api/gifs/*` and `/api/stickers/*`. Key stays in backend env.
+
+## Spotify on profile?
+
+No. Only embed from `POST /api/messages/link-preview`.
+
+## E2EE?
+
+No. Server reads content. [Privacy](/docs/product/privacy).
+
+## Where to PR?
+
+UI → [frontend](https://github.com/klovy-chat/frontend). API → [backend](https://github.com/klovy-chat/backend). Tauri → [application](https://github.com/klovy-chat/application). Docs → this folder. Vulnerabilities → Advisories, no public PoC. Code questions: [kontakt@klovy.chat](mailto:kontakt@klovy.chat).

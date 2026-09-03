@@ -1,0 +1,46 @@
+---
+title: Errors and limits
+description: HTTP codes, CSRF, rate limits, and JSON messages.
+icon: CircleAlert
+---
+
+Errors are JSON. The client builds `ApiError` from them (`status`, sometimes `code`, `retryAfter`). Do not assume one shape for all controllers — sometimes `error`, sometimes `message`. 401 on a mutation is session; 403 with CSRF text is cookie/header mismatch; 403 without that is often Origin or missing `X-Klovy-Client`.
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+```
+
+```json
+{ "error": "Invalid or missing CSRF token" }
+```
+
+Sometimes the field is `message` instead of `error`, e.g. `{ "message": "Channel not found" }`. On 503 there may be `retryable: true`.
+
+## Common codes
+
+| HTTP | When |
+| --- | --- |
+| 400 | Validation (password, username, body) |
+| 401 | Missing / invalid session |
+| 403 | CSRF, origin, inactive account, no channel permission |
+| 404 | Missing resource (message, invite, channel) |
+| 409 | Conflict (e.g. username taken) — depends on controller |
+| 429 | Rate limit (`retryAfter` when the server returns it) |
+| 502 / 503 / 504 | Gateway / temporary unavailability — client retries upload a few times |
+
+CSRF: `403` with `{ "error": "Invalid or missing CSRF token" }`.
+
+## Limiters (names in code)
+
+Separate windows for: login, signup, 2FA, password and username change, upload, pins, channel reports, search, global limit, channel send.
+
+Exact thresholds live in `utils/ratelimit` and move. Do not hard-code them in a third-party client.
+
+## Whitelist
+
+Pending accounts have a session, but channels / messages / friends / WS still fail. UI stays on `/pending` until the `whitelist:approved` frame.
+
+## Origin and client
+
+Unknown Origin or missing `X-Klovy-Client` fails at the edge. Locally `ORIGIN` / `FRONTEND_URL` must match Vite.

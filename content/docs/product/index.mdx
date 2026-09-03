@@ -1,0 +1,25 @@
+---
+title: Jak to działa
+description: Kanał, konto, DM — rzeczy, których nie wyczytasz z samego pathu.
+icon: Boxes
+---
+
+Ścieżki HTTP i ramki WS są w [API](/docs/api). Ta sekcja jest od tego, co ludzie mylą, jak przychodzą z Discorda albo ze Slacka i próbują mapować 1:1.
+
+U nas nie ma serwera (guildi) nad kanałami. Kanał to po prostu grupa: nazwa, avatar, lista członków, jeden `admin`. Ten admin to twórca i koniec. Nie ma ról, nie ma „moderatora z połową uprawnień”, nie ma bota który siedzi na kanale. DM nie otworzysz do losowego username’a — najpierw zaproszenie znajomych (albo `autoAccepted`, jak obie strony się minęły requestami).
+
+| Słowo | U nas |
+| --- | --- |
+| Konto | `username` 3–32, `[a-z0-9_]`. Logujesz się `@nazwą`, nie mailem. Maila w ogóle nie zbieramy przy signupie. |
+| Kanał | Jedna grupa, jeden `admin`. |
+| Znajomy | Bez akceptacji nie ma DM. |
+| Czat | Albo `contactId`, albo `channelId`. W jednym body nie mieszaj, backend nie zgadnie. |
+| Właściciel | Twórca kanału. Innej macierzy uprawnień nie szukaj w kodzie, nie ma jej. |
+
+Po logowaniu appka trzyma się ciasteczek i CSRF. Na produkcji dochodzi Turnstile, przy 2FA jeszcze TOTP. Jak konto wisi na whiteliście, jedyny legalny ekran to `/pending`. WebSocket tam **nie** wolno otwierać — handshake i tak padnie, a w logach będzie śmieć. Jak już sesja jest „pełna”: `GET /api` (limity, flagi), `POST /api/auth/ws-crypto` (klucz ramek), upgrade `/ws`, potem REST na listę kanałów/kontaktów i historia, a live idzie ramkami.
+
+Czego nie dopisuj, bo „wszyscy tak mają”: E2EE (klucze E2E wyleciały z repo, nie przywracaj ich w PR-ze bez rozmowy), boty, webhooki, OAuth aplikacji, katalog publicznych kanałów, natywny Android/iOS, Spotify podpięty pod profil. W czacie z Spotify zostaje embed z `link-preview`, nic więcej.
+
+Głos nie jest osobnym „pokojem”. Token LiveKit bierzesz HTTP-em, dzwonek i join idą ramkami. Media nie wchodzą na Actix. Plik z czatu też nie leci prosto na CDN — najpierw kwarantanna i ClamAV.
+
+Dalej, jak potrzebujesz szczegółów z kodu: [web i Tauri](/docs/product/installation), [kanały](/docs/product/channels), [wiadomości](/docs/product/messages), [głos](/docs/product/connections).

@@ -1,0 +1,36 @@
+---
+title: Routes and layout
+description: React Router, chat panels, settings slugs.
+icon: LayoutDashboard
+---
+
+Routes live in `pages/`. Auth and whitelist guards sit in context, not in some React Router `loader` — if a new screen should be logged-in only, wire the same context; don't write a second gate. UI strings: `pl.json` and `en.json`, always both. Settings slugs stay in English (`/settings/account`); labels come from i18n.
+
+| Path | What's there |
+| --- | --- |
+| `/login`, `/signup` | session; Turnstile on prod |
+| `/setup` | profile after first login |
+| `/pending` | whitelist, no WS |
+| `/` | list and conversation |
+| `/invite/:id` | preview + `POST /api/invite/{id}/accept` |
+| `/settings/*` | panel |
+
+On a wide screen you get a sidebar (channels, DMs, search for chat **names**, not message content), center with history and pins, composer at the bottom. Below that: emoji, GIF, stickers, file, and call. On narrow screens list and chat switch — same state, different layout, not two views with separate fetches. Click the header for channel details or contact profile. Unread shows on the list; on desktop there's also a badge that reads `(N)` from the title.
+
+`/pending` is not a "nice waiting screen". The account has cookies, but channels, messages, friends, and WS handshake will still fail. Don't open the socket "just in case" — you'll get a reconnect loop and log noise.
+
+New settings tab: add an entry in `settings/routes.ts`. Slug in English, label from JSON.
+
+| In UI | Path |
+| --- | --- |
+| My account | `/settings/account` |
+| Profile | `/settings/profile` |
+| Devices | `/settings/sessions` |
+| Status | `/settings/status` |
+| Voice | `/settings/voice` |
+| Language | `/settings/language` |
+| Warnings | `/settings/warnings` |
+
+Language (`pl` / `en`) goes via `PATCH /api/auth/language` and lands on the account, so a new browser gets the same. Light/dark theme stays client-side — the server doesn't know about it.
+
+Folders and conventions: [Frontend](/docs/developers/frontend).

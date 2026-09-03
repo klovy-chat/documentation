@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* Ten sam charcoal i szarości, akcent fiolet zamiast błękitu. */
+
+@theme {
+  --color-fd-primary: #7a5af5;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-ring: #7a5af5;
+  --color-fd-background: #ffffff;
+  --color-fd-foreground: #1c1e21;
+  --color-fd-muted: #f5f6f7;
+  --color-fd-muted-foreground: #606770;
+  --color-fd-card: #f5f6f7;
+  --color-fd-card-foreground: #1c1e21;
+  --color-fd-popover: #ffffff;
+  --color-fd-popover-foreground: #1c1e21;
+  --color-fd-border: #dadde1;
+  --color-fd-secondary: #ebedf0;
+  --color-fd-secondary-foreground: #1c1e21;
+  --color-fd-accent: #eeeaff;
+  --color-fd-accent-foreground: #1c1458;
+}
+
+.dark {
+  --color-fd-primary: #7a5af5;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-ring: #7a5af5;
+  --color-fd-background: #1b1b1d;
+  --color-fd-foreground: #e3e3e3;
+  --color-fd-muted: #2a2a2d;
+  --color-fd-muted-foreground: #a4a6a8;
+  --color-fd-card: #242526;
+  --color-fd-card-foreground: #e3e3e3;
+  --color-fd-popover: #242526;
+  --color-fd-popover-foreground: #e3e3e3;
+  --color-fd-border: #444950;
+  --color-fd-secondary: #2a2a2d;
+  --color-fd-secondary-foreground: #e3e3e3;
+  --color-fd-accent: #2a2644;
+  --color-fd-accent-foreground: #c5bbfb;
+}
+
+#nd-sidebar {
+  background-color: #f5f6f7;
+}
+
+.dark #nd-sidebar {
+  background-color: #18181a;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

@@ -1,0 +1,46 @@
+---
+title: Błędy i limity
+description: Kody HTTP, CSRF, rate limit i komunikaty JSON.
+icon: CircleAlert
+---
+
+Błędy są JSON. Klient składa z tego `ApiError` (`status`, czasem `code`, `retryAfter`). Nie zakładaj jednego kształtu na wszystkie kontrolery — bywa `error`, bywa `message`. 401 na mutacji to sesja, 403 z tekstem o CSRF to mismatch cookie/nagłówka, 403 bez tego często Origin albo brak `X-Klovy-Client`.
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+```
+
+```json
+{ "error": "Invalid or missing CSRF token" }
+```
+
+Czasem pole `message` zamiast `error`, np. `{ "message": "Channel not found" }`. Przy 503 bywa `retryable: true`.
+
+## Typowe kody
+
+| HTTP | Kiedy |
+| --- | --- |
+| 400 | Walidacja (hasło, nazwa, body) |
+| 401 | Brak / nieważna sesja |
+| 403 | CSRF, origin, konto nieaktywne, brak uprawnień na kanale |
+| 404 | Brak zasobu (wiadomość, zaproszenie, kanał) |
+| 409 | Konflikt (np. nazwa zajęta) — zależnie od kontrolera |
+| 429 | Rate limit (`retryAfter` gdy serwer go zwraca) |
+| 502 / 503 / 504 | Brama / chwilowa niedostępność — klient ponawia upload kilka razy |
+
+CSRF: `403` z `{ "error": "Invalid or missing CSRF token" }`.
+
+## Limitery (nazwy w kodzie)
+
+Osobne okna m.in. dla: logowania, rejestracji, 2FA, zmiany hasła i nazwy, uploadu, pinów, zgłoszeń kanału, wyszukiwania, globalnego limitu, wysyłki na kanał.
+
+Dokładne progi są w `utils/ratelimit` i się ruszają. Nie wpisuj ich na sztywno w obcym kliencie.
+
+## Whitelist
+
+Konto pending ma sesję, ale kanały / wiadomości / znajomi / WS i tak odpadną. UI siedzi na `/pending` do ramki `whitelist:approved`.
+
+## Origin i klient
+
+Nieznany Origin albo brak `X-Klovy-Client` odpada na brzegu. Lokalnie `ORIGIN` / `FRONTEND_URL` muszą trafić w Vite.
