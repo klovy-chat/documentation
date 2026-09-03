@@ -4,6 +4,8 @@ import { createI18nMiddleware } from 'fumadocs-core/i18n/middleware';
 import { docsContentRoute, docsRoute } from '@/lib/shared';
 import { i18n } from '@/lib/i18n';
 
+export const runtime = 'experimental-edge';
+
 const handleI18n = createI18nMiddleware(i18n);
 
 const { rewrite: rewriteDocs } = rewritePath(
@@ -15,7 +17,7 @@ const { rewrite: rewriteSuffix } = rewritePath(
   `${docsContentRoute}{/*path}/content.md`,
 );
 
-export default function proxy(request: NextRequest, event: NextFetchEvent) {
+export function middleware(request: NextRequest, event: NextFetchEvent) {
   const suffixResult = rewriteSuffix(request.nextUrl.pathname);
   if (suffixResult) {
     return NextResponse.rewrite(new URL(suffixResult, request.nextUrl));
@@ -35,5 +37,5 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|brand|og).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|brand).*)'],
 };

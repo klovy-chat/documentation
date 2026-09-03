@@ -1,7 +1,7 @@
 export const appName = 'Klovy Chat';
 export const docsRoute = '/docs';
-export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';
+export const defaultOgImage = '/brand/logo_colour.svg';
 
 export const gitConfig = {
   user: 'klovy-chat',

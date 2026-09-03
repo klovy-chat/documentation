@@ -28,5 +28,6 @@
   ],
   "observability": {
     "enabled": true
-  }
+  },
+  "minify": true
 }
