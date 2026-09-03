@@ -4,7 +4,8 @@
   "private": true,
   "description": "Docs Klovy Chat — stack, API, jak działa czat.",
   "scripts": {
-    "build": "next build",
+    "build": "opennextjs-cloudflare build",
+    "build:next": "next build",
     "dev": "next dev",
     "start": "next start",
     "types:check": "next typegen && tsc --noEmit",
