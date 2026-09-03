@@ -1,5 +1,5 @@
 {
-  "name": "klovy-chat-documentation",
+  "name": "documentation",
   "version": "0.0.23",
   "private": true,
   "description": "Docs Klovy Chat — stack, API, jak działa czat.",
@@ -7,9 +7,14 @@
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
-    "types:check": "next typegen && tsc --noEmit"
+    "types:check": "next typegen && tsc --noEmit",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.6",
     "cnfast": "^0.1.0",
     "fumadocs-core": "16.15.5",
     "fumadocs-mdx": "15.4.0",
@@ -27,6 +32,7 @@
     "@types/react-dom": "^19.2.5",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.128.0"
   }
 }

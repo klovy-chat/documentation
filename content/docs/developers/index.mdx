@@ -6,7 +6,7 @@ icon: Code
 
 Trzy główne repo obok siebie, nie jeden tree z workspaces. README w każdym z nich bywa nowsze niż marketing, więc jak coś tu zgrzyta, otwórz plik w kodzie. Ta strona docs też potrafi zostać w tyle — wtedy wygrywa GitHub.
 
-Frontend to to, co ludzie klikają. Backend trzyma sesje, wiadomości, kanały i WebSocket. Desktop to okno Tauri wokół tego samego frontendu — nie kopiujemy komponentów do Rusta. Strona [klovy.chat](https://klovy.chat) jest czwartym repo i nie wchodzi w runtime czatu. Docs, które czytasz, to osobny folder (`klovy-chat-documentation`), nie leżą w frontendzie.
+Frontend to to, co ludzie klikają. Backend trzyma sesje, wiadomości, kanały i WebSocket. Desktop to okno Tauri wokół tego samego frontendu — nie kopiujemy komponentów do Rusta. Strona [klovy.chat](https://klovy.chat) jest czwartym repo i nie wchodzi w runtime czatu. Docs, które czytasz, to osobne repo (`documentation`), nie leżą w frontendzie.
 
 Jak nie wiesz od czego zacząć: [lokalne środowisko](/docs/developers/local-setup). Mongo musi wstać, inaczej `cargo run` nawet nie dojdzie do bindu. Jak request nie dochodzi: [backend](/docs/developers/backend) i CORS w `.env` — najczęściej `localhost` vs `127.0.0.1`. Jak dodajesz przycisk w UI: [frontend](/docs/developers/frontend). Nowy endpoint zawsze w dwóch miejscach, nowa ramka WS też (`protocol.ts` i `handlers.rs`).
 

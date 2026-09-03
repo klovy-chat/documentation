@@ -6,7 +6,7 @@ icon: Code
 
 Three main repos side by side, not one tree with workspaces. The README in each is often newer than marketing, so if something here feels off, open the file in the repo. These docs can lag too — when that happens, GitHub wins.
 
-Frontend is what people click. Backend holds sessions, messages, channels, and WebSocket. Desktop is a Tauri window around the same frontend — we do not copy components into Rust. The [klovy.chat](https://klovy.chat) site is a fourth repo and is not part of chat runtime. The docs you are reading live in a separate folder (`klovy-chat-documentation`), not inside the frontend repo.
+Frontend is what people click. Backend holds sessions, messages, channels, and WebSocket. Desktop is a Tauri window around the same frontend — we do not copy components into Rust. The [klovy.chat](https://klovy.chat) site is a fourth repo and is not part of chat runtime. The docs you are reading live in a separate repo (`documentation`), not inside the frontend repo.
 
 If you are not sure where to start: [local setup](/docs/developers/local-setup). Mongo has to be running, otherwise `cargo run` will not even get to the bind. If requests never arrive: [backend](/docs/developers/backend) and CORS in `.env` — usually `localhost` vs `127.0.0.1`. If you are adding a button in the UI: [frontend](/docs/developers/frontend). A new endpoint is always two places; a new WS frame too (`protocol.ts` and `handlers.rs`).
 
