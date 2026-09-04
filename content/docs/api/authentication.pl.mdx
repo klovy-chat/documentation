@@ -1,0 +1,125 @@
+---
+title: Uwierzytelnianie
+description: Ciasteczka sesji, CSRF, Turnstile i identyfikator klienta.
+icon: KeyRound
+---
+
+JWT nie ląduje w `localStorage`. Po logowaniu są HttpOnly cookies (access + refresh). Dalsze requesty z `credentials: include`. Jak wkleisz token do `Authorization: Bearer`, backend tego nie czyta — sesja jest w ciasteczku albo jej nie ma.
+
+Signup, login, login/2fa i refresh CSRF nie biorą. Reszta mutacji z przeglądarki tak. Turnstile na produkcji; w `development` backend go nie wymaga, nie wklejaj site keya „na zapas” do `.env` frontendu.
+
+## POST `/api/auth/signup`
+
+Aliasy: `/api/auth/register`. Na produkcji Turnstile. CSRF tu nie trzeba.
+
+```http
+POST /api/auth/signup
+Content-Type: application/json
+X-Klovy-Client: KlovyChatApp/1.0
+```
+
+```json
+{
+  "username": "jan_kowalski",
+  "password": "********",
+  "turnstileToken": "…",
+  "language": "en"
+}
+```
+
+`username`: 3–32 znaki, małe litery, cyfry, `_`. Hasło: min. 8 znaków, wielka i mała litera, cyfra, znak z `@$!%*?&`; hasła z wycieków są odrzucane.
+
+## POST `/api/auth/login`
+
+Aliasy: `/sign-in`, `/signin`. CSRF nie jest wymagany.
+
+```json
+{
+  "username": "jan_kowalski",
+  "password": "********",
+  "turnstileToken": "…"
+}
+```
+
+Sukces (bez 2FA): obiekt `user` + ciasteczka + `csrfToken`.
+
+Gdy 2FA jest włączone:
+
+```json
+{
+  "requiresTwoFactor": true,
+  "twoFactorToken": "…"
+}
+```
+
+## POST `/api/auth/login/2fa`
+
+```json
+{
+  "twoFactorToken": "…",
+  "code": "123456",
+  "turnstileToken": "…"
+}
+```
+
+`code` — TOTP albo kod zapasowy.
+
+## POST `/api/auth/refresh`
+
+Bez CSRF. Nowa para ciasteczek. Klient woła to przy `401` i puszcza oryginalny request jeszcze raz.
+
+## POST `/api/auth/logout`
+
+Wymaga sesji. Unieważnia bieżące urządzenie.
+
+## GET `/api/auth/userinfo`
+
+Aliasy: `GET /api/auth`, `/me`, `/user`. Bieżący użytkownik.
+
+## POST `/api/auth/ws-crypto`
+
+Sesja wymagana. Materiał AES-GCM do ramek WebSocket.
+
+```json
+{
+  "token": "…",
+  "key": "…",
+  "expiresIn": 3600
+}
+```
+
+## GET `/api/auth/registration-status`
+
+Publiczne. Czy signup jest otwarty:
+
+```json
+{
+  "open": true,
+  "message": "…"
+}
+```
+
+## CSRF
+
+| | |
+| --- | --- |
+| Cookie | `csrf_token` |
+| Nagłówek | `x-csrf-token` (ta sama wartość) |
+| JSON | pole `csrfToken` przy logowaniu / refresh |
+
+**Bez CSRF:** signup, login, login/2fa, refresh, `/api/security/*`. GET/HEAD/OPTIONS zawsze bez.
+
+Mismatch → `403`
+
+```json
+{ "error": "Invalid or missing CSRF token" }
+```
+
+## Nagłówki klienta
+
+| Nagłówek | Wartość |
+| --- | --- |
+| `X-Klovy-Client` | `KlovyChatApp/1.0` |
+| `X-Klovy-User-Agent` | opis przeglądarki / Tauri |
+
+Muszą przejść CORS. Lokalnie `ORIGIN` i `FRONTEND_URL` = origin Vite, inaczej się wywali.

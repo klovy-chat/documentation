@@ -1,0 +1,61 @@
+---
+title: Głos
+description: Tokeny LiveKit dla połączeń 1:1 i głosu na kanale.
+icon: PhoneCall
+---
+
+Prefiks `/api/voice` (alias `/api/voices`). Sesja, CSRF na POST. Tędy idzie tylko token — media lecą do LiveKit, nie przez Actix. Dzwonek i hangup to ramki `call:*` / `channel-voice:*`. Kolejność w 1:1: ramka invite, potem token, potem connect. Na kanale bez `channel-voice:join` mikrofon nie wstanie, nawet jak JWT już masz.
+
+Klient odrzuca `url` spoza `VITE_LIVEKIT_ALLOWED_HOSTS`. Backend podpisuje `LIVEKIT_API_KEY` / `SECRET`.
+
+## POST `/api/voice/token`
+
+Aliasy: `POST /api/voice`, `/call/token`.
+
+DM:
+
+```json
+{ "peerId": "userId" }
+```
+
+Kanał:
+
+```json
+{ "channelId": "channelId" }
+```
+
+```json
+{
+  "token": "eyJ…",
+  "url": "wss://….livekit.cloud",
+  "room": "…"
+}
+```
+
+Klient odrzuca `url` spoza `VITE_LIVEKIT_ALLOWED_HOSTS` (np. `*.livekit.cloud`). Backend podpisuje token `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET`.
+
+## GET `/api/voice/active`
+
+```json
+{
+  "active": true,
+  "peerId": "…",
+  "mode": "audio"
+}
+```
+
+`mode`: `audio` | `video`.
+
+## Sygnalizacja (WS, nie REST)
+
+| `type` | Kierunek |
+| --- | --- |
+| `call:invite` | klient → serwer |
+| `call:incoming` | serwer → kalendarz UI |
+| `call:accept` / `call:accepted` | akceptacja |
+| `call:reject` / `call:rejected` | odrzucenie |
+| `call:cancel` / `call:cancelled` | anulowanie |
+| `call:end` / `call:ended` | rozłączenie |
+| `call:timeout` | brak odbioru |
+| `call:unavailable` | zajęty / offline |
+| `channel-voice:join` / `leave` / `state` | głos na kanale |

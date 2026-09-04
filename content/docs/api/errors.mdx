@@ -1,10 +1,10 @@
 ---
-title: Błędy i limity
-description: Kody HTTP, CSRF, rate limit i komunikaty JSON.
+title: Errors and limits
+description: HTTP codes, CSRF, rate limits, and JSON messages.
 icon: CircleAlert
 ---
 
-Błędy są JSON. Klient składa z tego `ApiError` (`status`, czasem `code`, `retryAfter`). Nie zakładaj jednego kształtu na wszystkie kontrolery — bywa `error`, bywa `message`. 401 na mutacji to sesja, 403 z tekstem o CSRF to mismatch cookie/nagłówka, 403 bez tego często Origin albo brak `X-Klovy-Client`.
+Errors are JSON. The client builds `ApiError` from them (`status`, sometimes `code`, `retryAfter`). Do not assume one shape for all controllers — sometimes `error`, sometimes `message`. 401 on a mutation is session; 403 with CSRF text is cookie/header mismatch; 403 without that is often Origin or missing `X-Klovy-Client`.
 
 ```http
 HTTP/1.1 403 Forbidden
@@ -15,32 +15,32 @@ Content-Type: application/json
 { "error": "Invalid or missing CSRF token" }
 ```
 
-Czasem pole `message` zamiast `error`, np. `{ "message": "Channel not found" }`. Przy 503 bywa `retryable: true`.
+Sometimes the field is `message` instead of `error`, e.g. `{ "message": "Channel not found" }`. On 503 there may be `retryable: true`.
 
-## Typowe kody
+## Common codes
 
-| HTTP | Kiedy |
+| HTTP | When |
 | --- | --- |
-| 400 | Walidacja (hasło, nazwa, body) |
-| 401 | Brak / nieważna sesja |
-| 403 | CSRF, origin, konto nieaktywne, brak uprawnień na kanale |
-| 404 | Brak zasobu (wiadomość, zaproszenie, kanał) |
-| 409 | Konflikt (np. nazwa zajęta) — zależnie od kontrolera |
-| 429 | Rate limit (`retryAfter` gdy serwer go zwraca) |
-| 502 / 503 / 504 | Brama / chwilowa niedostępność — klient ponawia upload kilka razy |
+| 400 | Validation (password, username, body) |
+| 401 | Missing / invalid session |
+| 403 | CSRF, origin, inactive account, no channel permission |
+| 404 | Missing resource (message, invite, channel) |
+| 409 | Conflict (e.g. username taken) — depends on controller |
+| 429 | Rate limit (`retryAfter` when the server returns it) |
+| 502 / 503 / 504 | Gateway / temporary unavailability — client retries upload a few times |
 
-CSRF: `403` z `{ "error": "Invalid or missing CSRF token" }`.
+CSRF: `403` with `{ "error": "Invalid or missing CSRF token" }`.
 
-## Limitery (nazwy w kodzie)
+## Limiters (names in code)
 
-Osobne okna m.in. dla: logowania, rejestracji, 2FA, zmiany hasła i nazwy, uploadu, pinów, zgłoszeń kanału, wyszukiwania, globalnego limitu, wysyłki na kanał.
+Separate windows for: login, signup, 2FA, password and username change, upload, pins, channel reports, search, global limit, channel send.
 
-Dokładne progi są w `utils/ratelimit` i się ruszają. Nie wpisuj ich na sztywno w obcym kliencie.
+Exact thresholds live in `utils/ratelimit` and move. Do not hard-code them in a third-party client.
 
 ## Whitelist
 
-Konto pending ma sesję, ale kanały / wiadomości / znajomi / WS i tak odpadną. UI siedzi na `/pending` do ramki `whitelist:approved`.
+Pending accounts have a session, but channels / messages / friends / WS still fail. UI stays on `/pending` until the `whitelist:approved` frame.
 
-## Origin i klient
+## Origin and client
 
-Nieznany Origin albo brak `X-Klovy-Client` odpada na brzegu. Lokalnie `ORIGIN` / `FRONTEND_URL` muszą trafić w Vite.
+Unknown Origin or missing `X-Klovy-Client` fails at the edge. Locally `ORIGIN` / `FRONTEND_URL` must match Vite.

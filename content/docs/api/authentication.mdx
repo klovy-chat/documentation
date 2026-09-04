@@ -1,16 +1,16 @@
 ---
-title: Uwierzytelnianie
-description: Ciasteczka sesji, CSRF, Turnstile i identyfikator klienta.
+title: Authentication
+description: Session cookies, CSRF, Turnstile, and client identifier.
 icon: KeyRound
 ---
 
-JWT nie ląduje w `localStorage`. Po logowaniu są HttpOnly cookies (access + refresh). Dalsze requesty z `credentials: include`. Jak wkleisz token do `Authorization: Bearer`, backend tego nie czyta — sesja jest w ciasteczku albo jej nie ma.
+JWT does not land in `localStorage`. After login you get HttpOnly cookies (access + refresh). Further requests use `credentials: include`. If you paste a token into `Authorization: Bearer`, the backend does not read it — the session is in the cookie or it is not there.
 
-Signup, login, login/2fa i refresh CSRF nie biorą. Reszta mutacji z przeglądarki tak. Turnstile na produkcji; w `development` backend go nie wymaga, nie wklejaj site keya „na zapas” do `.env` frontendu.
+Signup, login, login/2fa, and refresh do not require CSRF. Other browser mutations do. Turnstile on production; in `development` the backend does not require it — do not paste a site key “just in case” into the frontend `.env`.
 
 ## POST `/api/auth/signup`
 
-Aliasy: `/api/auth/register`. Na produkcji Turnstile. CSRF tu nie trzeba.
+Aliases: `/api/auth/register`. Turnstile on production. CSRF not required here.
 
 ```http
 POST /api/auth/signup
@@ -23,15 +23,15 @@ X-Klovy-Client: KlovyChatApp/1.0
   "username": "jan_kowalski",
   "password": "********",
   "turnstileToken": "…",
-  "language": "pl"
+  "language": "en"
 }
 ```
 
-`username`: 3–32 znaki, małe litery, cyfry, `_`. Hasło: min. 8 znaków, wielka i mała litera, cyfra, znak z `@$!%*?&`; hasła z wycieków są odrzucane.
+`username`: 3–32 characters, lowercase letters, digits, `_`. Password: min. 8 characters, uppercase and lowercase letter, digit, character from `@$!%*?&`; passwords from known leaks are rejected.
 
 ## POST `/api/auth/login`
 
-Aliasy: `/sign-in`, `/signin`. CSRF nie jest wymagany.
+Aliases: `/sign-in`, `/signin`. CSRF is not required.
 
 ```json
 {
@@ -41,9 +41,9 @@ Aliasy: `/sign-in`, `/signin`. CSRF nie jest wymagany.
 }
 ```
 
-Sukces (bez 2FA): obiekt `user` + ciasteczka + `csrfToken`.
+Success (without 2FA): `user` object + cookies + `csrfToken`.
 
-Gdy 2FA jest włączone:
+When 2FA is enabled:
 
 ```json
 {
@@ -62,23 +62,23 @@ Gdy 2FA jest włączone:
 }
 ```
 
-`code` — TOTP albo kod zapasowy.
+`code` — TOTP or backup code.
 
 ## POST `/api/auth/refresh`
 
-Bez CSRF. Nowa para ciasteczek. Klient woła to przy `401` i puszcza oryginalny request jeszcze raz.
+No CSRF. New cookie pair. The client calls this on `401` and retries the original request.
 
 ## POST `/api/auth/logout`
 
-Wymaga sesji. Unieważnia bieżące urządzenie.
+Requires a session. Revokes the current device.
 
 ## GET `/api/auth/userinfo`
 
-Aliasy: `GET /api/auth`, `/me`, `/user`. Bieżący użytkownik.
+Aliases: `GET /api/auth`, `/me`, `/user`. Current user.
 
 ## POST `/api/auth/ws-crypto`
 
-Sesja wymagana. Materiał AES-GCM do ramek WebSocket.
+Session required. AES-GCM material for WebSocket frames.
 
 ```json
 {
@@ -90,7 +90,7 @@ Sesja wymagana. Materiał AES-GCM do ramek WebSocket.
 
 ## GET `/api/auth/registration-status`
 
-Publiczne. Czy signup jest otwarty:
+Public. Whether signup is open:
 
 ```json
 {
@@ -104,10 +104,10 @@ Publiczne. Czy signup jest otwarty:
 | | |
 | --- | --- |
 | Cookie | `csrf_token` |
-| Nagłówek | `x-csrf-token` (ta sama wartość) |
-| JSON | pole `csrfToken` przy logowaniu / refresh |
+| Header | `x-csrf-token` (same value) |
+| JSON | `csrfToken` field on login / refresh |
 
-**Bez CSRF:** signup, login, login/2fa, refresh, `/api/security/*`. GET/HEAD/OPTIONS zawsze bez.
+**No CSRF:** signup, login, login/2fa, refresh, `/api/security/*`. GET/HEAD/OPTIONS always without.
 
 Mismatch → `403`
 
@@ -115,11 +115,11 @@ Mismatch → `403`
 { "error": "Invalid or missing CSRF token" }
 ```
 
-## Nagłówki klienta
+## Client headers
 
-| Nagłówek | Wartość |
+| Header | Value |
 | --- | --- |
 | `X-Klovy-Client` | `KlovyChatApp/1.0` |
-| `X-Klovy-User-Agent` | opis przeglądarki / Tauri |
+| `X-Klovy-User-Agent` | browser / Tauri description |
 
-Muszą przejść CORS. Lokalnie `ORIGIN` i `FRONTEND_URL` = origin Vite, inaczej się wywali.
+Must pass CORS. Locally `ORIGIN` and `FRONTEND_URL` must match the Vite origin, otherwise it will fail.

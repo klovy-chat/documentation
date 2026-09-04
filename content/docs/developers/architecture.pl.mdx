@@ -1,0 +1,37 @@
+---
+title: Jak to jest poskładane
+description: Klient, API, storage i głos.
+icon: Boxes
+---
+
+Desktop nie ma drugiego interfejsu. Tauri otwiera ten sam frontend co przeglądarka, tylko w natywnym oknie, z badge’em i updaterem. Kanał u nas to jedna grupa z jednym właścicielem, nie serwer z rolami — to jest w [produkcie](/docs/product), bo z samego `/api/channel` tego nie widać.
+
+Ruch z przeglądarki na produkcji idzie przez Cloudflare Workers (SPA), a potem na maszynę z API. WebSocket nie idzie „obok” REST-u jakimś innym hostem — to ten sam origin `api.klovy.chat`, tylko upgrade na `/ws`.
+
+```
+Przeglądarka / Tauri          Cloudflare              Backend
+┌─────────────────┐           ┌──────────┐            ┌──────────────────────┐
+│ app.klovy.chat  │  HTTPS    │ Workers  │  proxy     │ Axum (edge: CORS,    │
+│ React + Vite    │──────────►│ (SPA)    │───────────►│ limity, proxy)       │
+│                 │  WSS      └──────────┘            │        ▼             │
+│ LiveKit client  │                                   │ Actix-web REST + WS  │
+└────────┬────────┘                                   └─────────┬────────────┘
+         │                                                      │
+         │  media                                                ├─ MongoDB Atlas
+         ▼                                                      ├─ R2 + ClamAV
+   LiveKit Cloud                                                └─ LiveKit API
+```
+
+## Co gdzie siedzi
+
+Frontend trzyma trasy (login, signup, setup, pending, czat, invite, settings), stan auth / WebSocket / połączeń i stringi w `pl.json` / `en.json`. W DEV Vite puszcza `/api`, `/whitelist` i `/ws` na `127.0.0.1:8080`, więc nie musisz kleić CORS-a na `localhost:5173` ręcznie — o ile backend ma `ORIGIN` i `FRONTEND_URL` ustawione na ten origin.
+
+Na serwerze publiczny ruch wpada najpierw na **Axum**. To CORS, limity, czasem proxy. REST i upgrade WebSocket robi **Actix-web** na wewnętrznym porcie. Mongo trzyma użytkowników, kanały, wiadomości, sesje i refresh tokeny. Plik z czatu nie ląduje od razu na publicznym CDN: idzie do kwarantanny na R2, ClamAV go ogląda, i dopiero jak jest czysty, klient dostaje URL.
+
+Głos nie przechodzi przez nasz serwer HTTP. Backend podpisuje token LiveKit (`LIVEKIT_API_KEY` / `SECRET`) i oddaje `url` + `room`. Same pakiety audio/wideo nie wchodzą na Actix. Klient i tak sprawdzi host na `VITE_LIVEKIT_ALLOWED_HOSTS` (u nas zwykle `*.livekit.cloud`). Jak ktoś podsunie inny URL w tokenie, UI go nie weźmie.
+
+## Prefiksy HTTP
+
+W routerze często są dwie ścieżki na to samo: `/api/channel` i `/api/channels`, `/api/message` i `/api/messages`. To nie dwa kontrolery, tylko aliasy, bo stary klient i nowy wołały inaczej. Kanoniczne pathy, których używa obecny frontend, są w [API](/docs/api).
+
+Po zalogowaniu kolejność jest zawsze ta sama: ciasteczka już są, `GET /api` po limity i flagi, `POST /api/auth/ws-crypto` po klucz, dopiero wtedy `/ws`. Ramka to zwykły `{ type, payload }`. Nazwy `type` muszą być identyczne po obu stronach — lista jest na stronie [WebSocket](/docs/api/websocket). Jak odpalisz socketa przed `ws-crypto`, na produkcji klient sam nic nie wyśle, a lokalnie czasem jeszcze plaintext przejdzie i potem dziwisz się że prod „nie działa”.

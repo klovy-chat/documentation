@@ -1,0 +1,35 @@
+---
+title: Frontend
+description: React + Vite na app.klovy.chat.
+icon: PanelTop
+---
+
+Repo: [klovy-chat/frontend](https://github.com/klovy-chat/frontend). Na produkcji to Cloudflare Workers, deploy przez `wrangler`. Lokalnie Vite na `127.0.0.1:5173`. Proxy łapie `/api`, `/whitelist` i `/ws`, więc w DEV nie celujesz przeglądarką na `:8080`, chyba że debugujesz sam backend.
+
+Stack jest nudny i tak miało być: React 18, TypeScript, Vite 8, React Router, i18next (PL i EN), klient LiveKit. Turnstile wpinamy tylko na produkcji — w DEV pole tokena możesz wysłać puste albo w ogóle nie wołać captchy, backend w `development` jej nie wymaga.
+
+```
+src/
+├── pages/          Login, Signup, ProfileSetup, PendingApproval, Chat, Invite
+├── settings/       panel, slugi po angielsku
+├── components/     czat, kanały, call
+├── context/        Auth, WebSocket, presence, call
+├── api/            HTTP + protocol.ts
+├── crypto/         koperta treści, ramki WS
+└── languages/      pl.json, en.json
+```
+
+`pages/` to ekrany. `api/` to jedyne miejsce, z którego wolno strzelać na backend — nie rób `fetch('/api/...')` w komponencie „bo szybciej”. `protocol.ts` trzyma stringi ramek WS; jak dodasz `type` tylko tam, serwer go nie zna. Stringi UI zawsze w obu JSON-ach, inaczej na EN wyskoczy klucz albo puste.
+
+| Zmienna | Po co |
+| --- | --- |
+| `VITE_BACKEND_URL` | lokalnie `http://127.0.0.1:8080` |
+| `VITE_CDN_BASE_URL` | skąd brać załączniki po skanie |
+| `VITE_TURNSTILE_SITE_KEY` | puste w DEV, na `vite build` prod musi być |
+| `VITE_LIVEKIT_ALLOWED_HOSTS` | np. `*.livekit.cloud` |
+
+Build produkcyjny nie przejdzie z `http://` w `VITE_BACKEND_URL`. Turnstile też musi być ustawiony, nawet jak testujesz preview.
+
+Nowy endpoint HTTP: plik w `src/api` **i** trasa w backendzie. Nowa ramka WS: `protocol.ts` **i** `handlers.rs`. Nowa zakładka w ustawieniach: wpis w `settings/routes.ts` (slug EN, etykieta z i18n).
+
+Każdy request z appki ma `X-Klovy-Client: KlovyChatApp/1.0`. Middleware i CORS trzymają allowlistę — bez tego nagłówka na produkcji często dostaniesz ciszę albo 403, nie ładny JSON. Jest jeszcze `X-Klovy-User-Agent` (przeglądarka albo Tauri). Sesja idzie ciasteczkami, więc `credentials: include` jest w `api/client.ts`, nie dokładaj go „dla pewności” drugi raz.

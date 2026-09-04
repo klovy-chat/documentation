@@ -1,26 +1,26 @@
 ---
-title: Kanały
-description: Jedna grupa, jeden admin, zaproszenia.
+title: Channels
+description: One group, one admin, invites.
 icon: Hash
 ---
 
-Nie ma serwera nad kanałami. Kto przychodzi z Discorda, szuka guildi, ról i `#ogólny` pod spodem — u nas kanał to po prostu grupa. W Mongo: nazwa, avatar, `members`, `admin` = twórca. REST: [API kanałów](/docs/api/channels).
+There is no server above channels. People coming from Discord look for guilds, roles, and `#general` underneath — here a channel is just a group. In Mongo: name, avatar, `members`, `admin` = creator. REST: [channels API](/docs/api/channels).
 
-`POST /api/channel/create-channel` `{ name, members }`. Twórca jest jedynym adminem i koniec. Nie ma „drugiego moda” ani bota z kickiem. `POST /api/channel/add-user/{id}` `{ userIdToAdd }` też tylko on — klient zwykle wrzuca `members` od razu przy create, add-user zostaje na dokładanie kogoś później.
+`POST /api/channel/create-channel` `{ name, members }`. Creator is the only admin, period. No "second mod" or bot with kick. `POST /api/channel/add-user/{id}` `{ userIdToAdd }` is the same — client usually puts `members` in create; add-user is for adding someone later.
 
-Z zewnątrz wchodzisz zaproszeniem albo add-user. Publicznego discovery nie ma. Nie da się wyszukać kanału po nazwie z ulicy.
+You join from outside via invite or add-user. No public discovery. You can't search for a channel by name from the street.
 
 | | |
 | --- | --- |
-| `GET/POST /api/channel/{id}/invites` | lista / `{ maxUses? }` |
-| `DELETE …/invites/{inviteId}` | unieważnienie |
-| `GET /api/invite/{id}` | podgląd, musisz być zalogowany |
+| `GET/POST /api/channel/{id}/invites` | list / `{ maxUses? }` |
+| `DELETE …/invites/{inviteId}` | revoke |
+| `GET /api/invite/{id}` | preview, must be logged in |
 | `POST /api/invite/{id}/accept` | join |
 
-Podgląd bywa: brak, wygasłe, revoked, limit. UI `/invite/:id` ma to rozróżnić, nie pokazywać jednego „nie działa”. `DELETE /api/channel/delete/{id}` ścina wiadomości na amen — to nie leave. Po `leave` wracasz tylko nowym zaproszeniem, stary link Cię nie wpuści jak był jednorazowy albo revoked.
+Preview may show: missing, expired, revoked, limit hit. UI at `/invite/:id` should distinguish these, not one generic "doesn't work". `DELETE /api/channel/delete/{id}` wipes messages for good — that's not leave. After `leave` you only get back with a new invite; an old link won't let you in if it was one-time or revoked.
 
-Kick / unban / unmute: `{ userId }`. Ban i mute-member: `{ userId, durationSeconds? }` — bez czasu = na stałe, w UI od 5 min do 7 dni. Slowmode i lock: `PATCH`, nie POST. Zgłoszenie: `{ reason, details? }` (`spam`, `offensive`, `harassment`, `illegal`, `impersonation`, `other`). `POST …/mute` to wyciszenie powiadomień u siebie. Mute członka to inna trasa (`mute-member`). Łatwo je pomylić, bo obie mają „mute” w nazwie.
+Kick / unban / unmute: `{ userId }`. Ban and mute-member: `{ userId, durationSeconds? }` — no duration = permanent; UI from 5 min to 7 days. Slowmode and lock: `PATCH`, not POST. Report: `{ reason, details? }` (`spam`, `offensive`, `harassment`, `illegal`, `impersonation`, `other`). `POST …/mute` is muting notifications for yourself. Muting a member is a different route (`mute-member`). Easy to confuse — both have "mute" in the name.
 
-Głos wisi na tym samym kanale, nie ma osobnego voice channel. Token: `POST /api/voice/token` `{ channelId }`, ramki `channel-voice:*`. Samo otwarcie czatu nie łączy mikrofonu — musisz `join`. [Głos](/docs/product/connections).
+Voice hangs on the same channel; there is no separate voice channel. Token: `POST /api/voice/token` `{ channelId }`, frames `channel-voice:*`. Opening chat alone doesn't connect the mic — you must `join`. [Voice](/docs/product/connections).
 
-Na liście WS: `channel-added`, `left`, `deleted`, `member-joined` / `left`, `name-updated`, `avatar-updated`, `slowmode-updated`, `chat-locked-updated`, `moderation-updated`. Jak dodajesz pole na kanale i nie puszczasz ramki, druga karta zobaczy zmianę dopiero po reloadzie.
+On the list over WS: `channel-added`, `left`, `deleted`, `member-joined` / `left`, `name-updated`, `avatar-updated`, `slowmode-updated`, `chat-locked-updated`, `moderation-updated`. If you add a field on the channel and don't emit a frame, the other tab sees the change only after reload.

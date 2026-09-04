@@ -1,24 +1,24 @@
 ---
-title: Ustawienia
-description: Która zakładka woła który endpoint.
+title: Settings
+description: Which tab calls which endpoint.
 icon: Settings
 ---
 
-Slugi: [trasy](/docs/product/interface). Mutacje: [auth](/docs/api/auth). CSRF na POST/PATCH/DELETE — jak zapis profilu wraca 403 z `Invalid or missing CSRF token`, cookie i nagłówek się rozjechały, nie „złe bio”.
+Slugs: [routes](/docs/product/interface). Mutations: [auth](/docs/api/auth). CSRF on POST/PATCH/DELETE — if profile save returns 403 with `Invalid or missing CSRF token`, cookie and header drifted, not "bad bio".
 
-| W UI | Request |
+| In UI | Request |
 | --- | --- |
-| Nazwa, bio, kolor | `POST /api/auth/update-profile` `{ displayName, bio?, color? }` |
-| Avatar / baner | `POST` multipart, zdejmowanie `DELETE` |
+| Display name, bio, color | `POST /api/auth/update-profile` `{ displayName, bio?, color? }` |
+| Avatar / banner | `POST` multipart, remove with `DELETE` |
 | Username | `POST /api/auth/change-username` `{ username, password, code? }` |
-| Hasło | `POST /api/auth/change-password` `{ currentPassword, newPassword, code? }` |
+| Password | `POST /api/auth/change-password` `{ currentPassword, newPassword, code? }` |
 | 2FA | `/api/auth/2fa/setup` · `enable` · `disable` |
-| Wyłączenie / usunięcie | `/api/auth/account/*` + hasło (i TOTP jak jest) |
+| Disable / delete | `/api/auth/account/*` + password (and TOTP if on) |
 
-Avatar ~6 MiB, banner ~7 MiB. Hasło, nazwa, upload i 2FA mają osobne limity — 429 na zmianie nicka nie znaczy że login też padł.
+Avatar ~6 MiB, banner ~7 MiB. Password, username, upload, and 2FA have separate limits — 429 on nickname change doesn't mean login is broken too.
 
-`GET /api/auth/sessions` — urządzenia. Odwołanie bieżącej zamyka WS (`session:revoked`). `revoke-others` zostawia tę kartę, resztę wylogowuje. Przycisk „wyloguj inne urządzenia” ma wołać to, nie pętlę `DELETE` po liście.
+`GET /api/auth/sessions` — devices. Revoking current closes WS (`session:revoked`). `revoke-others` keeps this tab, logs out the rest. "Log out other devices" should call that, not a loop of `DELETE` over the list.
 
-W UI: Dostępny → `online`, Niedostępny wygląda jak offline (`away`), Zaraz wracam → `brb`, Nie przeszkadzać → `dnd`. Idle woła ten sam POST co ręczna zmiana. Nie wysyłaj statusu jeszcze raz przez WS.
+In UI: Available → `online`, Unavailable looks offline (`away`), Be right back → `brb`, Do not disturb → `dnd`. Idle uses the same POST as manual change. Don't send status again over WS.
 
-Język jest na koncie (`PATCH /api/auth/language`). Motyw tylko w kliencie. Głos (urządzenia, PTT, jakość share) też — serwer nie trzyma wybranego mikrofonu. Ostrzeżenia: `GET /api/auth/warnings` + `acknowledge`. Ogłoszenia analogicznie, dismiss osobno.
+Language is on the account (`PATCH /api/auth/language`). Theme is client-only. Voice (devices, PTT, share quality) too — server doesn't store chosen mic. Warnings: `GET /api/auth/warnings` + `acknowledge`. Announcements similarly, dismiss separately.

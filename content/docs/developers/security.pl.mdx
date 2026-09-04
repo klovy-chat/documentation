@@ -1,0 +1,23 @@
+---
+title: Bezpieczeństwo
+description: Sesje, CSRF, whitelist, skan. Bez PoC.
+icon: ShieldCheck
+---
+
+Tu jest jak to jest zrobione i gdzie zgłaszać dziury. Nie będzie exploitów, payloadów ani „jak to obejść lokalnie”.
+
+Sesji nie trzymamy w `localStorage`, właśnie po to, żeby XSS nie wyciągnął JWT jednym skryptem. Ciasteczka są HttpOnly, mutacje z przeglądarki wymagają CSRF (cookie `csrf_token` i ten sam string w `x-csrf-token`), Origin jest sprawdzany. Logowanie dławią limity, na produkcji Turnstile, opcjonalnie TOTP. Plik z czatu nie idzie prosto na CDN: kwarantanna na R2, ClamAV, dopiero potem publiczny URL. Request bez `X-Klovy-Client` albo z originu spoza listy odpada na brzegu. Token LiveKit może wrócić z `url` — klient i tak porówna host z `VITE_LIVEKIT_ALLOWED_HOSTS`.
+
+Access i refresh to para ciasteczek. Przy 401 appka woła `POST /api/auth/refresh` (bez CSRF) i puszcza oryginalny request jeszcze raz. `GET /api/auth/sessions` pokazuje urządzenia. `DELETE` jednej sesji albo `revoke-others` zamyka WebSocket ramką `session:revoked` — UI ma się wylogować, nie wisieć na martwym sockecie.
+
+Nowe konto bywa na whiteliście. Ekran `/pending` nie otwiera WS. Backend i tak by handshake uciął, ale nie ma sensu robić reconnect-loop w tle.
+
+Hasła: Argon2. Część pól w Mongo jest zaszyfrowana kluczem serwera (to nie E2EE). Ramki WS po `POST /api/auth/ws-crypto` idą AES-GCM. Treści wiadomości **nie** nazywamy end-to-end: serwer je czyta, bo szuka, pinuje i moderuje. Jak w PR-ze albo w README pojawi się „szyfrowane end-to-end”, to błąd, nie feature.
+
+Luki zgłaszaj prywatnie, w repo którego dotyczy plik:
+
+- [backend](https://github.com/klovy-chat/backend/security/advisories/new)
+- [frontend](https://github.com/klovy-chat/frontend/security/advisories/new)
+- [application](https://github.com/klovy-chat/application/security/advisories/new)
+
+Publiczne issue z exploitami zamykamy. Do commitów nie wrzucaj `.env`, `TAURI_SIGNING_PRIVATE_KEY` ani dumpów bazy.

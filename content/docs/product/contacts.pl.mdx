@@ -1,0 +1,24 @@
+---
+title: Kontakty i DM
+description: Zaproszenie po username, blokada, wipe.
+icon: Users
+---
+
+Nie napiszesz do kogoś z ulicy. Najpierw znajomi, potem DM. To nie jest Slack z workspace’em, gdzie każdy widzi każdego. REST: [kontakty i znajomi](/docs/api/contacts-friends).
+
+`POST /api/friends/send` `{ username }` — bez `@`. Jak druga strona już wysłała zaproszenie, backend może oddać `autoAccepted` i od razu macie DM. Nie traktuj `autoAccepted` jako błędu, UI ma przejść na listę znajomych.
+
+| | |
+| --- | --- |
+| `GET` | `/api/friends/list`, `/received`, `/sent` |
+| `GET` | `/api/friends/status/{userId}` |
+| `POST` | `/{requestId}/accept`, `reject`, `cancel` |
+| `DELETE` | `/api/friends/{userId}` — **kasuje historię DM** |
+
+`status` ma `isFriend`, flagi blokady i `pendingRequest` albo `null`. WS: `friendship-added`, `friendship-removed`. Usunięcie znajomego nie jest „cichym unfollow” — historia rozmowy idzie razem. Jak chcesz tylko wyczyścić czat, zostaw znajomego i zrób wipe: `DELETE /api/contacts/{id}/conversation`.
+
+Lista w kliencie: `GET /api/contacts/get-contacts-for-list`. Szukanie: `POST /api/contacts/search` `{ searchTerm }` — nie `query`. Stary draft body z `query` dostaje 400 i godzinę szukasz w walidatorze.
+
+Profil `GET …/{id}/profile`. Block i mute to toggle POST, nie osobny un-block. Zablokowani: `GET …/blocked`. Blokada tnie DM. Na kanale i tak musisz kick/ban, bo to inna relacja. WS: `contact-block-updated`, `conversation-deleted`, plus update’y profilu / avatara / banera.
+
+Obecność kogoś: `GET /api/users/status/{userId}`. Swoją ustawiasz `POST /api/auth/availability-status` `{ availabilityStatus }` (`online`, `away`, `brb`, `dnd`). Idle w kliencie idzie tym POST-em — nie duplikuj `set-status` na WS, bo rozjedziesz stan między kartami.

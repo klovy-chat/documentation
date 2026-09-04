@@ -1,0 +1,30 @@
+---
+title: Aplikacja desktop
+description: Tauri 2 — instalatory, updater, badge.
+icon: AppWindow
+---
+
+Repo: [klovy-chat/application](https://github.com/klovy-chat/application). To powłoka. Nie ma tu Reacta czatu, nie kopiujemy `src/components`. Okno ładuje [app.klovy.chat](https://app.klovy.chat) (albo URL z konfiguracji w DEV). Jak zepsujesz layout, PR idzie do frontendu. Tu ruszasz tylko okno, badge, updater, podpis i instalatory.
+
+| OS | Co wychodzi |
+| --- | --- |
+| Windows | `.msi` / NSIS, plus wariant Microsoft Store |
+| macOS | `.dmg` universal (Intel + Apple Silicon), wariant App Store |
+| Linux | `.deb`, `.rpm`, `.AppImage` |
+
+Androida i iOS w tym repo nie ma i nie planujemy ich tu doklejać. Mobilna przeglądarka to ten sam frontend, tylko ciaśniejszy layout.
+
+```bash
+npm run dev                 # bieżący OS
+npm run build:windows
+npm run build:windows:store
+npm run build:macos
+npm run build:macos-appstore
+npm run build:linux
+```
+
+Główny plik to `src-tauri/tauri.conf.json`. Override’y per sklep / OS leżą obok (`tauri.windows.conf.json` itd.). Uprawnienia okna i pluginów: `src-tauri/capabilities/`. Jak dodajesz wywołanie native, sprawdź czy capability to w ogóle pozwala — Tauri 2 milczy, zamiast ładnie krzyczeć.
+
+Updater na instalatorze z GitHuba ciągnie `latest.json` z Releases. Wariant ze Store ma te endpointy puste, bo aktualizuje sklep. Badge woła `set_unread_badge` i **czyta liczbę z tytułu strony**, np. `(3) Klovy Chat`. Frontend ustawia `document.title`. Jak zmienisz format na `Klovy Chat — 3` albo dodasz inny nawias, badge przestanie się zgadzać i nikt nie będzie wiedział czemu, dopóki nie spojrzy w ten kontrakt. Discord Rich Presence to plugin, nie osobny serwis.
+
+Wydania robi utrzymujący: `npm run release` / `release:minor` albo workflow **Release**. CI taguje, buduje, podpisuje `TAURI_SIGNING_PRIVATE_KEY` i wrzuca artefakty. Release na GitHubie musi być **publiczny**. Prywatny draft updater zobaczy jako 404.

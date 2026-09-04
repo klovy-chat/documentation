@@ -64,5 +64,5 @@ const copy = {
 } as const;
 
 export function getHomeCopy(lang: string) {
-  return copy[lang as Locale] ?? copy.pl;
+  return copy[lang as Locale] ?? copy.en;
 }

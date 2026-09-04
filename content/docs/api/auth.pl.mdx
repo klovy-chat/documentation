@@ -1,14 +1,14 @@
 ---
-title: Auth and account
-description: Profile, 2FA, sessions, status, warnings, and account deletion.
+title: Auth i konto
+description: Profil, 2FA, sesje, status, ostrzeżenia i usuwanie konta.
 icon: UserCog
 ---
 
-Session + CSRF on mutations, unless stated otherwise. Prefix `/api/auth`. Language is `PATCH`, status is `POST`, removing a photo is `DELETE` — people mix up those three methods on their first client.
+Sesja + CSRF na mutacjach, chyba że napisane inaczej. Prefiks `/api/auth`. Język jest `PATCH`, status `POST`, zdjęcie zdejmujesz `DELETE` — te trzy metody ludzie mylą przy pierwszym kliencie.
 
-`code` in the body (TOTP) only when 2FA is enabled. If you send it “just in case” on an account without 2FA, validation may reject it. Backup codes from `enable` are shown once; do not log them.
+`code` w body (TOTP) tylko gdy 2FA jest włączone. Jak go wyślesz „na wszelki wypadek” na koncie bez 2FA, walidacja może kopnąć. Backup kody z `enable` pokazujesz raz; nie loguj ich.
 
-## Profile
+## Profil
 
 ### POST `/api/auth/update-profile`
 
@@ -22,15 +22,15 @@ Alias: `/profile`.
 }
 ```
 
-`color` — avatar color index (when there is no photo).
+`color` — indeks koloru avatara (gdy nie ma zdjęcia).
 
 ### PATCH `/api/auth/language`
 
 ```json
-{ "language": "pl" }
+{ "language": "en" }
 ```
 
-Values: `pl` | `en`.
+Wartości: `pl` | `en`.
 
 ### POST `/api/auth/availability-status`
 
@@ -40,7 +40,7 @@ Alias: `/status`.
 { "availabilityStatus": "online" }
 ```
 
-Values: `online` | `away` | `brb` | `dnd`.
+Wartości: `online` | `away` | `brb` | `dnd`.
 
 ### POST `/api/auth/change-username`
 
@@ -52,7 +52,7 @@ Values: `online` | `away` | `brb` | `dnd`.
 }
 ```
 
-`code` only when 2FA is enabled.
+`code` tylko gdy 2FA jest włączone.
 
 ### POST `/api/auth/change-password`
 
@@ -64,17 +64,17 @@ Values: `online` | `away` | `brb` | `dnd`.
 }
 ```
 
-`code` only when 2FA is enabled.
+`code` tylko gdy 2FA jest włączone.
 
 ### POST `/api/auth/add-profile-image`
 
-Aliases: `/profile-image`, `/avatar`. `multipart/form-data`, field `profile-image`, limit ~6 MiB.
+Aliasy: `/profile-image`, `/avatar`. `multipart/form-data`, pole `profile-image`, limit ~6 MiB.
 
 ### DELETE `/api/auth/remove-profile-image`
 
 ### POST `/api/auth/add-profile-banner`
 
-Aliases: `/profile-banner`, `/banner`. Field `profile-banner`, limit ~7 MiB.
+Aliasy: `/profile-banner`, `/banner`. Pole `profile-banner`, limit ~7 MiB.
 
 ### DELETE `/api/auth/remove-profile-banner`
 
@@ -99,7 +99,7 @@ Aliases: `/profile-banner`, `/banner`. Field `profile-banner`, limit ~7 MiB.
 { "password": "…", "code": "123456" }
 ```
 
-Returns `backupCodes` — show them once and do not stash them in logs.
+Zwraca `backupCodes` — pokaż je raz i nie chowaj w logach.
 
 ### POST `/api/auth/2fa/disable`
 
@@ -107,35 +107,35 @@ Returns `backupCodes` — show them once and do not stash them in logs.
 { "password": "…", "code": "123456" }
 ```
 
-## Sessions
+## Sesje
 
 ### GET `/api/auth/sessions`
 
-List of signed-in devices.
+Lista zalogowanych urządzeń.
 
 ### DELETE `/api/auth/sessions/{sessionId}`
 
-Sign out the given session. The current one gets WS `session:revoked`.
+Wyloguj wskazaną sesję. Bieżąca dostanie WS `session:revoked`.
 
 ### POST `/api/auth/sessions/revoke-others`
 
-All except the current one.
+Wszystkie poza bieżącą.
 
-## Account
+## Konto
 
 ### POST `/api/auth/account/disable`
 
-Immediately blocks login. An administrator can restore it.
+Natychmiast blokuje logowanie. Administrator może przywrócić.
 
 ```json
 { "password": "…", "code": "123456" }
 ```
 
-`code` only with 2FA.
+`code` tylko przy 2FA.
 
 ### POST `/api/auth/account/request-deletion`
 
-Deletion in 7 days. Can be cancelled until then. Body same as above.
+Usunięcie za 7 dni. Do tego czasu można anulować. Body jak wyżej.
 
 ### POST `/api/auth/account/cancel-deletion`
 
@@ -143,7 +143,7 @@ Deletion in 7 days. Can be cancelled until then. Body same as above.
 { "password": "…", "code": "123456" }
 ```
 
-## Warnings and announcements
+## Ostrzeżenia i ogłoszenia
 
 ### GET `/api/auth/warnings`
 
@@ -153,4 +153,4 @@ Deletion in 7 days. Can be cancelled until then. Body same as above.
 
 ### POST `/api/auth/announcements/dismiss`
 
-Separate rate limiters: login, signup, 2FA, password, username, upload, status.
+Osobne rate limitery: login, signup, 2FA, hasło, nazwa, upload, status.

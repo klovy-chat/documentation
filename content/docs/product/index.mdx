@@ -1,25 +1,25 @@
 ---
-title: Jak to działa
-description: Kanał, konto, DM — rzeczy, których nie wyczytasz z samego pathu.
+title: How it works
+description: Channels, accounts, DMs — things you won't infer from paths alone.
 icon: Boxes
 ---
 
-Ścieżki HTTP i ramki WS są w [API](/docs/api). Ta sekcja jest od tego, co ludzie mylą, jak przychodzą z Discorda albo ze Slacka i próbują mapować 1:1.
+HTTP paths and WS frames live in [API](/docs/api). This section covers what people get wrong when they come from Discord or Slack and try to map things 1:1.
 
-U nas nie ma serwera (guildi) nad kanałami. Kanał to po prostu grupa: nazwa, avatar, lista członków, jeden `admin`. Ten admin to twórca i koniec. Nie ma ról, nie ma „moderatora z połową uprawnień”, nie ma bota który siedzi na kanale. DM nie otworzysz do losowego username’a — najpierw zaproszenie znajomych (albo `autoAccepted`, jak obie strony się minęły requestami).
+There is no server (guild) above channels. A channel is just a group: name, avatar, member list, one `admin`. That admin is the creator, full stop. No roles, no "moderator with half the permissions", no bot sitting on the channel. You can't open a DM to a random username — friends first (or `autoAccepted` if both sides crossed requests).
 
-| Słowo | U nas |
+| Term | Here |
 | --- | --- |
-| Konto | `username` 3–32, `[a-z0-9_]`. Logujesz się `@nazwą`, nie mailem. Maila w ogóle nie zbieramy przy signupie. |
-| Kanał | Jedna grupa, jeden `admin`. |
-| Znajomy | Bez akceptacji nie ma DM. |
-| Czat | Albo `contactId`, albo `channelId`. W jednym body nie mieszaj, backend nie zgadnie. |
-| Właściciel | Twórca kanału. Innej macierzy uprawnień nie szukaj w kodzie, nie ma jej. |
+| Account | `username` 3–32, `[a-z0-9_]`. You log in with `@name`, not email. We don't collect email at signup at all. |
+| Channel | One group, one `admin`. |
+| Friend | No DM without acceptance. |
+| Chat | Either `contactId` or `channelId`. Don't mix both in one body — the backend won't guess. |
+| Owner | Channel creator. Don't look for another permission matrix in the code — there isn't one. |
 
-Po logowaniu appka trzyma się ciasteczek i CSRF. Na produkcji dochodzi Turnstile, przy 2FA jeszcze TOTP. Jak konto wisi na whiteliście, jedyny legalny ekran to `/pending`. WebSocket tam **nie** wolno otwierać — handshake i tak padnie, a w logach będzie śmieć. Jak już sesja jest „pełna”: `GET /api` (limity, flagi), `POST /api/auth/ws-crypto` (klucz ramek), upgrade `/ws`, potem REST na listę kanałów/kontaktów i historia, a live idzie ramkami.
+After login the app holds cookies and CSRF. Production adds Turnstile; with 2FA you also get TOTP. If the account is stuck on the whitelist, the only legal screen is `/pending`. WebSocket **must not** open there — the handshake will fail anyway and you'll pollute the logs. Once the session is "full": `GET /api` (limits, flags), `POST /api/auth/ws-crypto` (frame key), upgrade `/ws`, then REST for channel/contact lists and history, live traffic goes over frames.
 
-Czego nie dopisuj, bo „wszyscy tak mają”: E2EE (klucze E2E wyleciały z repo, nie przywracaj ich w PR-ze bez rozmowy), boty, webhooki, OAuth aplikacji, katalog publicznych kanałów, natywny Android/iOS, Spotify podpięty pod profil. W czacie z Spotify zostaje embed z `link-preview`, nic więcej.
+Don't add these because "everyone has them": E2EE (E2E keys left the repo — don't restore them in a PR without talking first), bots, webhooks, OAuth apps, public channel directory, native Android/iOS, Spotify wired to profile. In chat, Spotify stays as an embed from `link-preview`, nothing more.
 
-Głos nie jest osobnym „pokojem”. Token LiveKit bierzesz HTTP-em, dzwonek i join idą ramkami. Media nie wchodzą na Actix. Plik z czatu też nie leci prosto na CDN — najpierw kwarantanna i ClamAV.
+Voice is not a separate "room". You fetch the LiveKit token over HTTP; ring and join go over frames. Media doesn't hit Actix. Files from chat don't go straight to CDN either — quarantine and ClamAV first.
 
-Dalej, jak potrzebujesz szczegółów z kodu: [web i Tauri](/docs/product/installation), [kanały](/docs/product/channels), [wiadomości](/docs/product/messages), [głos](/docs/product/connections).
+Next, if you need code-level detail: [web and Tauri](/docs/product/installation), [channels](/docs/product/channels), [messages](/docs/product/messages), [voice](/docs/product/connections).

@@ -1,12 +1,12 @@
 ---
-title: Jak to jest poskładane
-description: Klient, API, storage i głos.
+title: How it fits together
+description: Client, API, storage, and voice.
 icon: Boxes
 ---
 
-Desktop nie ma drugiego interfejsu. Tauri otwiera ten sam frontend co przeglądarka, tylko w natywnym oknie, z badge’em i updaterem. Kanał u nas to jedna grupa z jednym właścicielem, nie serwer z rolami — to jest w [produkcie](/docs/product), bo z samego `/api/channel` tego nie widać.
+Desktop does not have a second interface. Tauri opens the same frontend as the browser, just in a native window, with a badge and updater. A channel here is one group with one owner, not a server with roles — that is in [product](/docs/product), because you will not see it from `/api/channel` alone.
 
-Ruch z przeglądarki na produkcji idzie przez Cloudflare Workers (SPA), a potem na maszynę z API. WebSocket nie idzie „obok” REST-u jakimś innym hostem — to ten sam origin `api.klovy.chat`, tylko upgrade na `/ws`.
+Traffic from the browser in production goes through Cloudflare Workers (SPA), then to the machine running the API. WebSocket does not ride "next to" REST on a different host — same origin `api.klovy.chat`, just an upgrade on `/ws`.
 
 ```
 Przeglądarka / Tauri          Cloudflare              Backend
@@ -22,16 +22,16 @@ Przeglądarka / Tauri          Cloudflare              Backend
    LiveKit Cloud                                                └─ LiveKit API
 ```
 
-## Co gdzie siedzi
+## What lives where
 
-Frontend trzyma trasy (login, signup, setup, pending, czat, invite, settings), stan auth / WebSocket / połączeń i stringi w `pl.json` / `en.json`. W DEV Vite puszcza `/api`, `/whitelist` i `/ws` na `127.0.0.1:8080`, więc nie musisz kleić CORS-a na `localhost:5173` ręcznie — o ile backend ma `ORIGIN` i `FRONTEND_URL` ustawione na ten origin.
+Frontend holds routes (login, signup, setup, pending, chat, invite, settings), auth / WebSocket / connection state, and strings in `pl.json` / `en.json`. In DEV, Vite proxies `/api`, `/whitelist`, and `/ws` to `127.0.0.1:8080`, so you do not have to glue CORS onto `localhost:5173` by hand — as long as the backend has `ORIGIN` and `FRONTEND_URL` set to that origin.
 
-Na serwerze publiczny ruch wpada najpierw na **Axum**. To CORS, limity, czasem proxy. REST i upgrade WebSocket robi **Actix-web** na wewnętrznym porcie. Mongo trzyma użytkowników, kanały, wiadomości, sesje i refresh tokeny. Plik z czatu nie ląduje od razu na publicznym CDN: idzie do kwarantanny na R2, ClamAV go ogląda, i dopiero jak jest czysty, klient dostaje URL.
+On the server, public traffic hits **Axum** first. That is CORS, rate limits, sometimes proxy. REST and WebSocket upgrade are handled by **Actix-web** on an internal port. Mongo holds users, channels, messages, sessions, and refresh tokens. A chat file does not land on a public CDN immediately: it goes to quarantine on R2, ClamAV scans it, and only when it is clean does the client get a URL.
 
-Głos nie przechodzi przez nasz serwer HTTP. Backend podpisuje token LiveKit (`LIVEKIT_API_KEY` / `SECRET`) i oddaje `url` + `room`. Same pakiety audio/wideo nie wchodzą na Actix. Klient i tak sprawdzi host na `VITE_LIVEKIT_ALLOWED_HOSTS` (u nas zwykle `*.livekit.cloud`). Jak ktoś podsunie inny URL w tokenie, UI go nie weźmie.
+Voice does not pass through our HTTP server. The backend signs a LiveKit token (`LIVEKIT_API_KEY` / `SECRET`) and returns `url` + `room`. Audio/video packets never hit Actix. The client still checks the host against `VITE_LIVEKIT_ALLOWED_HOSTS` (for us usually `*.livekit.cloud`). If someone slips a different URL into the token, the UI will not accept it.
 
-## Prefiksy HTTP
+## HTTP prefixes
 
-W routerze często są dwie ścieżki na to samo: `/api/channel` i `/api/channels`, `/api/message` i `/api/messages`. To nie dwa kontrolery, tylko aliasy, bo stary klient i nowy wołały inaczej. Kanoniczne pathy, których używa obecny frontend, są w [API](/docs/api).
+The router often has two paths for the same thing: `/api/channel` and `/api/channels`, `/api/message` and `/api/messages`. That is not two controllers, just aliases, because old and new clients called them differently. Canonical paths used by the current frontend are in [API](/docs/api).
 
-Po zalogowaniu kolejność jest zawsze ta sama: ciasteczka już są, `GET /api` po limity i flagi, `POST /api/auth/ws-crypto` po klucz, dopiero wtedy `/ws`. Ramka to zwykły `{ type, payload }`. Nazwy `type` muszą być identyczne po obu stronach — lista jest na stronie [WebSocket](/docs/api/websocket). Jak odpalisz socketa przed `ws-crypto`, na produkcji klient sam nic nie wyśle, a lokalnie czasem jeszcze plaintext przejdzie i potem dziwisz się że prod „nie działa”.
+After login the order is always the same: cookies are already set, `GET /api` for limits and flags, `POST /api/auth/ws-crypto` for the key, then `/ws`. A frame is plain `{ type, payload }`. `type` names must match on both sides — the list is on the [WebSocket](/docs/api/websocket) page. Open the socket before `ws-crypto` and on production the client sends nothing; locally plaintext sometimes still works and then you wonder why prod "does not work".

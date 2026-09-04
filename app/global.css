@@ -5,6 +5,7 @@
 /* Ten sam charcoal i szarości, akcent fiolet zamiast błękitu. */
 
 @theme {
+  --font-sans: var(--font-funnel-display), ui-sans-serif, system-ui, sans-serif;
   --color-fd-primary: #7a5af5;
   --color-fd-primary-foreground: #ffffff;
   --color-fd-ring: #7a5af5;

@@ -1,16 +1,16 @@
 ---
-title: Głos
-description: Tokeny LiveKit dla połączeń 1:1 i głosu na kanale.
+title: Voice
+description: LiveKit tokens for 1:1 calls and channel voice.
 icon: PhoneCall
 ---
 
-Prefiks `/api/voice` (alias `/api/voices`). Sesja, CSRF na POST. Tędy idzie tylko token — media lecą do LiveKit, nie przez Actix. Dzwonek i hangup to ramki `call:*` / `channel-voice:*`. Kolejność w 1:1: ramka invite, potem token, potem connect. Na kanale bez `channel-voice:join` mikrofon nie wstanie, nawet jak JWT już masz.
+Prefix `/api/voice` (alias `/api/voices`). Session, CSRF on POST. Only the token goes through here — media flows to LiveKit, not through Actix. Ring and hangup are `call:*` / `channel-voice:*` frames. 1:1 order: invite frame, then token, then connect. On a channel, without `channel-voice:join` the mic will not come up, even if you already have the JWT.
 
-Klient odrzuca `url` spoza `VITE_LIVEKIT_ALLOWED_HOSTS`. Backend podpisuje `LIVEKIT_API_KEY` / `SECRET`.
+The client rejects `url` outside `VITE_LIVEKIT_ALLOWED_HOSTS`. Backend signs with `LIVEKIT_API_KEY` / `SECRET`.
 
 ## POST `/api/voice/token`
 
-Aliasy: `POST /api/voice`, `/call/token`.
+Aliases: `POST /api/voice`, `/call/token`.
 
 DM:
 
@@ -18,7 +18,7 @@ DM:
 { "peerId": "userId" }
 ```
 
-Kanał:
+Channel:
 
 ```json
 { "channelId": "channelId" }
@@ -32,7 +32,7 @@ Kanał:
 }
 ```
 
-Klient odrzuca `url` spoza `VITE_LIVEKIT_ALLOWED_HOSTS` (np. `*.livekit.cloud`). Backend podpisuje token `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET`.
+The client rejects `url` outside `VITE_LIVEKIT_ALLOWED_HOSTS` (e.g. `*.livekit.cloud`). Backend signs the token with `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET`.
 
 ## GET `/api/voice/active`
 
@@ -46,16 +46,16 @@ Klient odrzuca `url` spoza `VITE_LIVEKIT_ALLOWED_HOSTS` (np. `*.livekit.cloud`).
 
 `mode`: `audio` | `video`.
 
-## Sygnalizacja (WS, nie REST)
+## Signaling (WS, not REST)
 
-| `type` | Kierunek |
+| `type` | Direction |
 | --- | --- |
-| `call:invite` | klient → serwer |
-| `call:incoming` | serwer → kalendarz UI |
-| `call:accept` / `call:accepted` | akceptacja |
-| `call:reject` / `call:rejected` | odrzucenie |
-| `call:cancel` / `call:cancelled` | anulowanie |
-| `call:end` / `call:ended` | rozłączenie |
-| `call:timeout` | brak odbioru |
-| `call:unavailable` | zajęty / offline |
-| `channel-voice:join` / `leave` / `state` | głos na kanale |
+| `call:invite` | client → server |
+| `call:incoming` | server → UI calendar |
+| `call:accept` / `call:accepted` | accept |
+| `call:reject` / `call:rejected` | reject |
+| `call:cancel` / `call:cancelled` | cancel |
+| `call:end` / `call:ended` | hang up |
+| `call:timeout` | no answer |
+| `call:unavailable` | busy / offline |
+| `channel-voice:join` / `leave` / `state` | channel voice |

@@ -1,0 +1,23 @@
+---
+title: Głos i wideo
+description: Token LiveKit po HTTP, dzwonek po WS.
+icon: Phone
+---
+
+Actix nie puszcza RTP. Dostajesz JWT i URL clouda, a pakiety audio/wideo idą prosto do LiveKit. Klient wywali `url` spoza `VITE_LIVEKIT_ALLOWED_HOSTS` — nawet jak token jest podpisany, host spoza listy nie wejdzie. Endpointy: [API głosu](/docs/api/voice).
+
+```http
+POST /api/voice/token
+```
+
+```json
+{ "peerId": "userId" }
+```
+
+albo `{ "channelId": "…" }`. W odpowiedzi `token`, `url`, `room`. `GET /api/voice/active` mówi czy coś już wisi (`mode`: `audio` | `video`). Na backendzie: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`. Bez tych trzech token się nie podpisze; UI wtedy często pokazuje „nie można połączyć”, a w logu backendu jest zwykły brak env.
+
+1:1 na WS, payload `{ from, to }`, invite może dodać `mode`. Z klienta: `call:invite` / `accept` / `reject` / `cancel` / `end` / `timeout`. Z serwera: `incoming`, `accepted`, `rejected`, `cancelled`, `ended`, `unavailable` (zajęty albo offline). Kolejność ma znaczenie: najpierw ramka, potem token, potem connect do pokoju. Odwrotnie dostaniesz pokój bez drugiej strony albo dzwonek bez mediów. W historii wpis `messageType: CALL`.
+
+Na kanale nie ma drugiej encji „voice channel”. `channel-voice:join` / `leave` / `state` z `{ channelId }`. Composer tekstowy zostaje — ludzie piszą i gadają na tym samym kanale. Samo otwarcie czatu nie łączy mikrofonu; bez `join` LiveKit Cię nie wpuści, nawet jak token już masz.
+
+Mikrofon, PTT i jakość share (480p–1080p, fps, Opus) są w `/settings/voice`. getUserMedia załatwia przeglądarka — backend tego nie widzi. Jak na Linuxie nie ma urządzenia albo Safari blokuje, to nie 403 z API, tylko cisza po stronie klienta.

@@ -1,0 +1,28 @@
+---
+title: Kontrybucja
+description: Fork, PR, licencja.
+icon: GitPullRequest
+---
+
+Kod leży na **Klovy License**. Issue i pull requesty przyjmujemy — literówka w i18n też, nie musisz od razu przepisywać połowy backendu. Mały PR z jednym stringiem przejdzie szybciej niż „przy okazji posprzątałem trzy katalogi”.
+
+Zanim otworzysz PR, sprawdź czy edytujesz właściwe repo. Frontend, backend, desktop i strona produktu to osobne drzewa. Łatwo wrzucić zmianę API do frontendu „bo tam jest client.ts”, a trasa i tak musi powstać w Rustcie. Docs ruszasz tutaj, nie w README frontendu, chyba że to akurat setup tego jednego repo.
+
+1. Fork tego repo, którego dotyczy zmiana.
+2. Branch `feature/…` albo `fix/…`. Nazwa ma mówić o co chodzi, nie `update` i nie `asdf`.
+3. W commicie nie ma `.env`, kluczy, dumpów Mongo ani plików z `target/` / `node_modules`.
+4. PR idzie na `main`. W opisie napisz co się zmieniło i czemu — dwa zdania wystarczą, esej niepotrzebny. Jak ruszasz endpoint, dopisz path i czy frontend już to woła.
+
+Otwarcie PR-a, zgłoszenie błędu albo audytu oznacza zgodę na pkt 7–11 licencji. Nie jest to drobny print w stopce, tylko warunek korzystania z kodu.
+
+| Temat | Repo |
+| --- | --- |
+| UI czatu, stringi w `pl.json` / `en.json` | frontend |
+| REST, WebSocket, skan, auth, Mongo | backend |
+| Instalator, badge, updater Tauri | application |
+| Landing, blog, strona download | website |
+| Ta dokumentacja | repo `documentation` |
+
+Na licencji wolno używać osobiście, do nauki i niekomercyjnie. Jak chcesz to sprzedawać, stawiać konkurencyjny komunikator albo kleić logo Klovy na swoim forku — najpierw pisemna zgoda Jakuba Maksymowicza. Pełny tekst jest w `LICENSE` w każdym repo, nie streszczaj go z pamięci.
+
+Pytania o kod: [kontakt@klovy.chat](mailto:kontakt@klovy.chat). Luki bezpieczeństwa idą na Advisories w konkretnym repo, nie mailem z PoC na grupę i nie publicznym issue.

@@ -1,49 +1,49 @@
 ---
 title: FAQ
-description: Rzeczy, o które ktoś pyta przy pierwszym PR.
+description: Things people ask on their first PR.
 icon: Info
 ---
 
-## Bot API? OAuth? Webhooki?
+## Bot API? OAuth? Webhooks?
 
-Nie. To API klienta Klovy — te same ścieżki co w `src/api`. Osobnego gatewaya dla botów nie ma i nie doklejamy go „obok” bo Discord tak ma.
+No. This is the Klovy client API — same paths as in `src/api`. There is no separate gateway for bots and we're not bolting one on "because Discord has it".
 
-## Czemu username, nie e-mail?
+## Why username, not email?
 
-Tak jest zrobione konto. Maila przy signupie nie zbieramy, resetu na skrzynkę też nie ma. Czy signup w ogóle stoi: `GET /api/auth/registration-status`.
+That's how accounts work. We don't collect email at signup; no inbox reset either. Whether signup is open: `GET /api/auth/registration-status`.
 
-## Sesja jest, czat martwy
+## Session works, chat is dead
 
-Whitelist. Zostań na `/pending`, WS nie otwieraj. Serwer puści zakres czatu po `whitelist:approved`. Handshake wcześniej i tak padnie, a w logach będzie reconnect co sekundę.
+Whitelist. Stay on `/pending`, don't open WS. Server opens chat scope after `whitelist:approved`. Handshake before that fails anyway and logs show reconnect every second.
 
-## Dodać serwery i role jak Discord?
+## Add servers and roles like Discord?
 
-Nie. Kanał = grupa, jeden `admin` (twórca). Botów, ról i katalogu publicznych kanałów też nie ma.
+No. Channel = group, one `admin` (creator). No bots, roles, or public channel directory either.
 
-## Wysyłka wiadomości POST-em?
+## Send messages with POST?
 
-W appce nie. Historia i upload HTTP, send na WS z `clientNonce`. `PUT`/`DELETE /api/messages/{id}` istnieją, UI i tak idzie ramkami.
+Not in the app. History and upload over HTTP; send on WS with `clientNonce`. `PUT`/`DELETE /api/messages/{id}` exist; UI still uses frames.
 
-## Język i slowmode — POST czy PATCH?
+## Language and slowmode — POST or PATCH?
 
-Język: `PATCH /api/auth/language`. Slowmode i lock: `PATCH`. Avatar precz: `DELETE`, nie POST z nullem.
+Language: `PATCH /api/auth/language`. Slowmode and lock: `PATCH`. Remove avatar: `DELETE`, not POST with null.
 
-## Search kontaktów polem `query`?
+## Contact search with `query` field?
 
-Nie. `{ "searchTerm": "…" }`. Lista DM: `/api/contacts/get-contacts-for-list`, nie gołe `/api/contacts` — alias istnieje, oficjalny klient woła dłuższą ścieżkę.
+No. `{ "searchTerm": "…" }`. DM list: `/api/contacts/get-contacts-for-list`, not bare `/api/contacts` — alias exists, official client calls the longer path.
 
-## Klucz Giphy na frontendzie?
+## Giphy key on the frontend?
 
-Nie. `GET /api/gifs/*` i `/api/stickers/*`. Klucz zostaje w env backendu.
+No. `GET /api/gifs/*` and `/api/stickers/*`. Key stays in backend env.
 
-## Spotify na profilu?
+## Spotify on profile?
 
-Nie. Tylko embed z `POST /api/messages/link-preview`.
+No. Only embed from `POST /api/messages/link-preview`.
 
 ## E2EE?
 
-Nie. Serwer czyta treści. [Prywatność](/docs/product/privacy).
+No. Server reads content. [Privacy](/docs/product/privacy).
 
-## Gdzie PR?
+## Where to PR?
 
-UI → [frontend](https://github.com/klovy-chat/frontend). API → [backend](https://github.com/klovy-chat/backend). Tauri → [application](https://github.com/klovy-chat/application). Docs → ten folder. Luki → Advisories, bez publicznego PoC. Pytania o kod: [kontakt@klovy.chat](mailto:kontakt@klovy.chat).
+UI → [frontend](https://github.com/klovy-chat/frontend). API → [backend](https://github.com/klovy-chat/backend). Tauri → [application](https://github.com/klovy-chat/application). Docs → this folder. Vulnerabilities → Advisories, no public PoC. Code questions: [kontakt@klovy.chat](mailto:kontakt@klovy.chat).

@@ -1,0 +1,25 @@
+---
+title: Konto
+description: Username, Turnstile, 2FA, whitelist, sesje.
+icon: UserRound
+---
+
+Logujesz się **nazwą**, nie mailem. Przy signupie maila w ogóle nie zbieramy — jak ktoś szuka „reset hasła na skrzynkę”, to tego endpointu nie ma. HTTP: [uwierzytelnianie](/docs/api/authentication) i [konto](/docs/api/auth).
+
+| | |
+| --- | --- |
+| Username | 3–32, `[a-z0-9_]` |
+| Hasło | min. 8, wielka, mała, cyfra, znak z `@$!%*?&`; wycieki odpadają |
+| Captcha | Turnstile na produkcji, w DEV nic |
+| CSRF | nie na signup / login / 2fa login / refresh |
+| Sesja | access + refresh w HttpOnly, `credentials: include` |
+
+Login: `{ username, password, turnstileToken }`. Jak na koncie stoi 2FA, nie dostaniesz od razu sesji — wraca `{ requiresTwoFactor, twoFactorToken }` i idziesz na `POST /api/auth/login/2fa` z kodem TOTP albo zapasowym. Czy signup w ogóle stoi: `GET /api/auth/registration-status`. Na zamkniętym signupie UI ma to pokazać, nie udawać że 400 to literówka w haśle.
+
+Whitelist bywa włączona. Konto wtedy istnieje, ciasteczka są ważne, ale czat (kanały, wiadomości, znajomi, WS) nie. UI trzyma `/pending` aż wpadnie `whitelist:approved`. Nie omijaj tego w kliencie — serwer i tak ucięłby scope.
+
+Po signupie jest `/setup`: `displayName`, `bio`, `color`, avatar (pole `profile-image`, ~6 MiB), baner (`profile-banner`, ~7 MiB). Ściąganie zdjęcia to **`DELETE`**, nie POST z pustym plikiem. Kolor (`color`) to indeks tła avatara, gdy zdjęcia nie ma — nie myl z kolorem motywu.
+
+2FA: `POST /api/auth/2fa/setup` daje secret i `otpauthUrl`. Enable zwraca `backupCodes` **jeden raz**. Jak je zgubisz, zostaje wyłączenie z hasłem i kodem z aplikacji. Wyłączenie i poważne zmiany na koncie (nazwa, hasło, usunięcie) chcą hasła i TOTP, jak jest włączone.
+
+Sesje: `GET /api/auth/sessions`. `DELETE …/{id}` albo `POST …/revoke-others` zamyka WebSocket ramką `session:revoked` — UI ma się wylogować, nie wisieć na martwym sockecie i odświeżać. Wyłączenie konta vs skasowanie za 7 dni: `account/disable` i `request-deletion` / `cancel-deletion`. Disable blokuje logowanie od razu, delete czeka tydzień i da się cofnąć.

@@ -1,14 +1,14 @@
 ---
-title: Kontakty i znajomi
-description: Zaproszenia, lista znajomych, blokady i profile.
+title: Contacts and friends
+description: Invites, friend list, blocks, and profiles.
 icon: UserPlus
 ---
 
-`/api/friends` (też `/api/friend`) i `/api/contacts` (`/api/contact`). Sesja, whitelist. Znajomi to zaproszenia i relacja. Kontakty to lista DM, blokada, mute i wipe historii. `DELETE /api/friends/{id}` kasuje znajomego **i** historię — wipe samej rozmowy to `DELETE` na contacts.
+`/api/friends` (also `/api/friend`) and `/api/contacts` (`/api/contact`). Session, whitelist. Friends are invites and the relationship. Contacts are the DM list, block, mute, and history wipe. `DELETE /api/friends/{id}` removes the friend **and** history — wiping the conversation alone is `DELETE` on contacts.
 
-Szukanie: `{ searchTerm }`, nie `query`. Lista w oficjalnym kliencie: `/api/contacts/get-contacts-for-list`.
+Search uses `{ searchTerm }`, not `query`. List in the official client: `/api/contacts/get-contacts-for-list`.
 
-## Znajomi
+## Friends
 
 ### GET `/api/friends/list`
 
@@ -20,13 +20,13 @@ Alias: `GET /api/friends`.
 
 ### POST `/api/friends/send`
 
-Aliasy: `/request`, `POST /api/friends`.
+Aliases: `/request`, `POST /api/friends`.
 
 ```json
 { "username": "jan_kowalski" }
 ```
 
-Bez `@`. Możliwe `autoAccepted` gdy druga strona już wysłała zaproszenie.
+No `@`. Possible `autoAccepted` when the other side already sent an invite.
 
 ### GET `/api/friends/received`
 
@@ -63,15 +63,15 @@ Alias: `/requests/sent`.
 
 ### DELETE `/api/friends/{friendUserId}`
 
-Usuwa znajomego i **historię DM**.
+Removes the friend and **DM history**.
 
 WS: `friendship-added`, `friendship-removed`.
 
-## Kontakty (lista DM)
+## Contacts (DM list)
 
 ### GET `/api/contacts/get-contacts-for-list`
 
-Aliasy: `GET /api/contacts`, `/list`. Oficjalny klient używa `/get-contacts-for-list`.
+Aliases: `GET /api/contacts`, `/list`. Official client uses `/get-contacts-for-list`.
 
 ```json
 { "contacts": [] }
@@ -89,20 +89,20 @@ Aliasy: `GET /api/contacts`, `/list`. Oficjalny klient używa `/get-contacts-for
 
 ### POST `/api/contacts/{contactId}/block`
 
-Toggle blokady. Zablokowany nie wyśle DM.
+Block toggle. Blocked users cannot send DMs.
 
 ### POST `/api/contacts/{contactId}/mute`
 
-Toggle wyciszenia powiadomień.
+Notification mute toggle.
 
 ### DELETE `/api/contacts/{contactId}/conversation`
 
-Alias: `/conversation/{contactId}`. Kasuje historię rozmowy.
+Alias: `/conversation/{contactId}`. Deletes conversation history.
 
 WS: `contact-block-updated`, `contact-profile-updated`, `contact-avatar-updated`, `contact-banner-updated`.
 
-## Obecność
+## Presence
 
 ### GET `/api/users/status/{userId}`
 
-Alias: `/api/user/status/{userId}`. Własny status: `POST /api/auth/availability-status`.
+Alias: `/api/user/status/{userId}`. Your own status: `POST /api/auth/availability-status`.

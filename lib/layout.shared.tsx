@@ -8,16 +8,17 @@ export const translations = i18n
   .translations()
   .extend(uiTranslations())
   .add({
-    pl: {
-      displayName: 'Polski',
-    },
     en: {
       displayName: 'English',
+    },
+    pl: {
+      displayName: 'Polski',
     },
   });
 
 export function baseOptions(_locale?: string): BaseLayoutProps {
   return {
+    i18n,
     nav: {
       title: (
         <>

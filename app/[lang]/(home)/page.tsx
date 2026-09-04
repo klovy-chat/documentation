@@ -18,7 +18,7 @@ export async function generateMetadata({
 export default async function HomePage({ params }: PageProps<'/[lang]'>) {
   const { lang } = await params;
   const copy = getHomeCopy(lang);
-  const prefix = lang === 'pl' ? '' : `/${lang}`;
+  const prefix = lang === 'en' ? '' : `/${lang}`;
 
   return (
     <main className="flex flex-1 flex-col">

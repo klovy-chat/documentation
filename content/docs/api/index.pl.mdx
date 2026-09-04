@@ -1,29 +1,29 @@
 ---
-title: API Overview
-description: Base URL, headers, and the full REST endpoint list.
+title: Przegląd API
+description: Baza URL, nagłówki i pełna lista endpointów REST.
 icon: Webhook
 ---
 
-**Base (production):** `https://api.klovy.chat`  
-**Base (local):** `http://127.0.0.1:8080`  
-**WebSocket:** `wss://api.klovy.chat/ws` (locally via Vite proxy `/ws`)
+**Baza (produkcja):** `https://api.klovy.chat`  
+**Baza (lokalnie):** `http://127.0.0.1:8080`  
+**WebSocket:** `wss://api.klovy.chat/ws` (lokalnie Vite proxy `/ws`)
 
-These are the same paths the app calls from `src/api/*.ts`. On the other side sits `src/routes/*.rs`. There is no separate bot API, and we are not planning to bolt one on “alongside”. A new endpoint that does not exist in both places simply does not exist — 404 or a dead button.
+To są te same ścieżki, które woła appka z `src/api/*.ts`. Po drugiej stronie siedzi `src/routes/*.rs`. Osobnego API dla botów nie ma i nie planujemy go doklejać „obok”. Nowy endpoint, którego nie ma w obu miejscach, po prostu nie istnieje — 404 albo martwy przycisk.
 
-Request bodies, status codes, and limits are on the subpages. This page is the map so you do not have to hunt for a path across twenty Rust files. Aliases in parentheses work; the canonical ones are those the current frontend uses.
+Body, kody i limity są na podstronach. Tu jest mapa, żeby nie szukać pathu w dwudziestu plikach Rusta. Aliasy w nawiasie działają, kanoniczne są te, których używa obecny frontend.
 
-The session lives in HttpOnly cookies, not a Bearer token in `localStorage`. Fetch must use `credentials: include`. JSON both ways. `/api/channel` and `/api/channels` (and similarly message/friend/contact) are aliases to the same controller, because historically the client called singular and plural forms interchangeably.
+Sesja to ciasteczka HttpOnly, nie Bearer w `localStorage`. Fetch musi iść z `credentials: include`. JSON w obie strony. `/api/channel` i `/api/channels` (i analogicznie message/friend/contact) to aliasy na ten sam kontroler, bo historycznie klient wzywał raz pojedynczą, raz mnogą.
 
-Every request from the app looks roughly like this:
+Każde żądanie z appki wygląda mniej więcej tak:
 
 ```http
 X-Klovy-Client: KlovyChatApp/1.0
 X-Klovy-User-Agent: …
 Cookie: …access…; csrf_token=…
-X-CSRF-Token: <same value as csrf_token cookie>
+X-CSRF-Token: <ta sama wartość co cookie csrf_token>
 ```
 
-CSRF on `POST` / `PUT` / `PATCH` / `DELETE`. Exceptions: signup, login, login/2fa, refresh. GET/HEAD/OPTIONS without a token. If the cookie and header do not match, you get 403 with `Invalid or missing CSRF token`, not 401.
+CSRF na `POST` / `PUT` / `PATCH` / `DELETE`. Wyjątki: signup, login, login/2fa, refresh. GET/HEAD/OPTIONS bez tokena. Jak cookie i nagłówek się rozjadą, dostaniesz 403 z `Invalid or missing CSRF token`, nie 401.
 
 ## Bootstrap
 
@@ -33,7 +33,7 @@ GET /api/
 GET /
 ```
 
-Returns version, flags, limits, WS and app URLs:
+Zwraca wersję, flagi, limity, URL-e WS i aplikacji:
 
 ```json
 {
@@ -61,27 +61,27 @@ Returns version, flags, limits, WS and app URLs:
 }
 ```
 
-## REST catalog
+## Katalog REST
 
-Canonical paths; aliases in parentheses. Request bodies on the subpages.
+Kanoniczne ścieżki, aliasy w nawiasie. Body na podstronach.
 
-### Public / session
+### Publiczne / sesja
 
-| Method | Endpoint | Auth |
+| Metoda | Endpoint | Auth |
 | --- | --- | --- |
-| `GET` | `/api` | no |
-| `GET` | `/api/auth/registration-status` | no |
-| `POST` | `/api/auth/signup` (`/register`) | no + Turnstile |
-| `POST` | `/api/auth/login` (`/sign-in`, `/signin`) | no + Turnstile |
-| `POST` | `/api/auth/login/2fa` | 2FA token + Turnstile |
-| `POST` | `/api/auth/refresh` | refresh cookie |
-| `POST` | `/api/auth/logout` | session |
-| `GET` | `/api/auth/userinfo` (`/me`, `/user`, `/api/auth`) | session |
-| `POST` | `/api/auth/ws-crypto` | session |
+| `GET` | `/api` | nie |
+| `GET` | `/api/auth/registration-status` | nie |
+| `POST` | `/api/auth/signup` (`/register`) | nie + Turnstile |
+| `POST` | `/api/auth/login` (`/sign-in`, `/signin`) | nie + Turnstile |
+| `POST` | `/api/auth/login/2fa` | token 2FA + Turnstile |
+| `POST` | `/api/auth/refresh` | cookie refresh |
+| `POST` | `/api/auth/logout` | sesja |
+| `GET` | `/api/auth/userinfo` (`/me`, `/user`, `/api/auth`) | sesja |
+| `POST` | `/api/auth/ws-crypto` | sesja |
 
-### Account
+### Konto
 
-| Method | Endpoint |
+| Metoda | Endpoint |
 | --- | --- |
 | `POST` | `/api/auth/update-profile` (`/profile`) |
 | `PATCH` | `/api/auth/language` |
@@ -106,9 +106,9 @@ Canonical paths; aliases in parentheses. Request bodies on the subpages.
 | `GET` | `/api/auth/announcements` |
 | `POST` | `/api/auth/announcements/dismiss` |
 
-### Channels
+### Kanały
 
-| Method | Endpoint |
+| Metoda | Endpoint |
 | --- | --- |
 | `GET` | `/api/channel/get-user-channels` |
 | `POST` | `/api/channel/create-channel` |
@@ -135,9 +135,9 @@ Canonical paths; aliases in parentheses. Request bodies on the subpages.
 | `POST` | `/api/invites/{inviteId}/accept` |
 | `GET` | `/api/channel/get-channel-messages/{id}` |
 
-### Messages
+### Wiadomości
 
-| Method | Endpoint |
+| Metoda | Endpoint |
 | --- | --- |
 | `POST` | `/api/messages/get-messages` |
 | `POST` | `/api/messages/pinned` |
@@ -149,11 +149,11 @@ Canonical paths; aliases in parentheses. Request bodies on the subpages.
 | `PUT` | `/api/messages/{id}` |
 | `DELETE` | `/api/messages/{id}` |
 
-Live send: WebSocket `sendMessage` / `send-channel-message`.
+Wysyłka na żywo: WebSocket `sendMessage` / `send-channel-message`.
 
-### Friends and contacts
+### Znajomi i kontakty
 
-| Method | Endpoint |
+| Metoda | Endpoint |
 | --- | --- |
 | `GET` | `/api/friends/list` |
 | `POST` | `/api/friends/send` |
@@ -173,9 +173,9 @@ Live send: WebSocket `sendMessage` / `send-channel-message`.
 | `DELETE` | `/api/contacts/{id}/conversation` |
 | `GET` | `/api/users/status/{userId}` |
 
-### Voice and media
+### Głos i media
 
-| Method | Endpoint |
+| Metoda | Endpoint |
 | --- | --- |
 | `POST` | `/api/voice/token` |
 | `GET` | `/api/voice/active` |
@@ -186,13 +186,13 @@ Live send: WebSocket `sendMessage` / `send-channel-message`.
 | `GET` | `/api/emojis` |
 
 <Cards>
-  <Card title="Authentication" href="/docs/api/authentication">
-    Login, CSRF, Turnstile, cookies.
+  <Card title="Uwierzytelnianie" href="/docs/api/authentication">
+    Login, CSRF, Turnstile, ciasteczka.
   </Card>
   <Card title="WebSocket" href="/docs/api/websocket">
-    type/payload frames.
+    Ramki type/payload.
   </Card>
-  <Card title="Errors" href="/docs/api/errors">
-    HTTP codes and limits.
+  <Card title="Błędy" href="/docs/api/errors">
+    Kody HTTP i limity.
   </Card>
 </Cards>

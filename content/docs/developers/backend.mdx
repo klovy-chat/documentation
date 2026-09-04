@@ -1,41 +1,41 @@
 ---
 title: Backend
-description: Axum na brzegu, Actix na REST i WebSocket.
+description: Axum at the edge, Actix for REST and WebSocket.
 icon: Server
 ---
 
-Repo: [klovy-chat/backend](https://github.com/klovy-chat/backend). Binarka nazywa się `klovy-chat-server`. Publiczny port (domyślnie 8080) to Axum; Actix siedzi obok na wewnętrznym HTTP i obsługuje `/api/*` plus upgrade `/ws`.
+Repo: [klovy-chat/backend](https://github.com/klovy-chat/backend). The binary is named `klovy-chat-server`. Public port (default 8080) is Axum; Actix sits beside it on internal HTTP and serves `/api/*` plus `/ws` upgrade.
 
-Reszta stosu: MongoDB Atlas, Cloudflare R2, ClamAV, tokeny LiveKit, Argon2 na hasła, JWT w ciasteczkach, AES-GCM na części pól i na ramkach WS, TOTP na 2FA.
+Rest of the stack: MongoDB Atlas, Cloudflare R2, ClamAV, LiveKit tokens, Argon2 for passwords, JWT in cookies, AES-GCM on some fields and WS frames, TOTP for 2FA.
 
 ```
 src/
-├── main.rs           start, indeksy Mongo, bind
+├── main.rs           start, Mongo indexes, bind
 ├── routes/           /api/*
-├── controllers/      logika
-├── model/            dokumenty Mongo
+├── controllers/      logic
+├── model/            Mongo documents
 ├── ws/               handshake, encrypt, handlers
 ├── middlewares/      auth, CSRF, captcha, origin, whitelist
 └── utils/            storage, scan, crypto
 ```
 
-Nowy endpoint najpierw wpisujesz w `routes/*.rs` — tam decydujesz czy jest publiczny, czy `verify_token`, czy Turnstile, czy limiter. Dopiero potem funkcja w `controllers/`. Jak zrobisz odwrotnie, trasa nie istnieje i godzinę szukasz literówki w nazwie handlera.
+For a new endpoint, register it first in `routes/*.rs` — there you decide public vs `verify_token`, Turnstile, rate limiter. Then the function in `controllers/`. Do it the other way around and the route does not exist and you spend an hour hunting a typo in the handler name.
 
-| Grupa | Przykłady |
+| Group | Examples |
 | --- | --- |
-| Serwer | `PORT`, `INTERNAL_HTTP_PORT`, `TRUST_PROXY`, `NODE_ENV` |
-| Baza | `MONGODB_URI`, `DB_NAME` |
+| Server | `PORT`, `INTERNAL_HTTP_PORT`, `TRUST_PROXY`, `NODE_ENV` |
+| Database | `MONGODB_URI`, `DB_NAME` |
 | Auth | `JWT_KEY`, `FIELD_ENCRYPTION_KEY`, `TOKEN_HASH_KEY` |
 | CORS | `ORIGIN`, `FRONTEND_URL` |
 | Captcha | `TURNSTILE_SECRET_KEY` |
 | Storage | `R2_*`, `CDN_PUBLIC_BASE_URL`, `R2_QUARANTINE_BUCKET` |
-| Skan | `CLAMAV_HOST` |
-| Głos | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` |
+| Scan | `CLAMAV_HOST` |
+| Voice | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` |
 
-Na produkcji Origin i Frontend muszą być HTTPS. Bucket kwarantanny ma być **inny** niż publiczny CDN. ClamAV na prodzie ma być włączony; dummy host w DEV tylko po to, żeby proces wstał.
+In production Origin and Frontend must be HTTPS. Quarantine bucket must be **different** from the public CDN. ClamAV must be on in prod; dummy host in DEV is only so the process starts.
 
-Kolejność middleware na Actix, mniej więcej: kompresja, security headers, limity, client guard, origin, **CSRF**, sanityzacja JSON, proxy, scope `/api/…`. Login, signup, login/2fa i refresh CSRF nie biorą — reszta mutacji chce cookie `csrf_token` i ten sam string w `x-csrf-token`. GET/HEAD/OPTIONS bez CSRF.
+Actix middleware order, roughly: compression, security headers, limits, client guard, origin, **CSRF**, JSON sanitization, proxy, scope `/api/…`. Login, signup, login/2fa, and refresh skip CSRF — other mutations want cookie `csrf_token` and the same string in `x-csrf-token`. GET/HEAD/OPTIONS without CSRF.
 
-Kanały, wiadomości i znajomi idą jeszcze przez whitelistę. Konto „pending” ma ważne ciasteczka, ale te scope’y i handshake WS i tak padną. UI ma trzymać takiego usera na `/pending`, nie „próbować czatu aż przejdzie”.
+Channels, messages, and friends also go through the whitelist. A "pending" account has valid cookies, but those scopes and WS handshake still fail. UI should keep that user on `/pending`, not "try chat until it works".
 
-W repo jest `encrypt-old-messages` (stare rekordy), `Caddyfile.example` (`:8081` → `:8080`), Compose z profilem `scan` i `deploy.yml` na `main`. Workflow deployu na forku się nie odpali — tak jest ustawione w yaml. Env produkcyjny nie commitujemy; szablon jest w `.env.example`.
+The repo has `encrypt-old-messages` (legacy records), `Caddyfile.example` (`:8081` → `:8080`), Compose with profile `scan`, and `deploy.yml` on `main`. Deploy workflow will not run on a fork — that is intentional in the yaml. We do not commit prod env; template is in `.env.example`.

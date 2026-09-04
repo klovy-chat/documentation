@@ -1,36 +1,36 @@
 ---
-title: Trasy i layout
-description: React Router, panele czatu, slugi ustawień.
+title: Routes and layout
+description: React Router, chat panels, settings slugs.
 icon: LayoutDashboard
 ---
 
-Trasy siedzą w `pages/`. Guard auth i whitelist jest w kontekście, nie w jakimś `loaderze` React Routera — jak nowy ekran ma być tylko dla zalogowanych, dopinasz ten sam kontekst, nie piszesz drugiej bramki. Stringi UI: `pl.json` i `en.json`, zawsze oba. Slugi ustawień zostają po angielsku (`/settings/account`), etykiety biorą się z i18n.
+Routes live in `pages/`. Auth and whitelist guards sit in context, not in some React Router `loader` — if a new screen should be logged-in only, wire the same context; don't write a second gate. UI strings: `pl.json` and `en.json`, always both. Settings slugs stay in English (`/settings/account`); labels come from i18n.
 
-| Path | Co tam jest |
+| Path | What's there |
 | --- | --- |
-| `/login`, `/signup` | sesja; na prodzie Turnstile |
-| `/setup` | profil po pierwszym logowaniu |
-| `/pending` | whitelist, bez WS |
-| `/` | lista i konwersacja |
-| `/invite/:id` | podgląd + `POST /api/invite/{id}/accept` |
+| `/login`, `/signup` | session; Turnstile on prod |
+| `/setup` | profile after first login |
+| `/pending` | whitelist, no WS |
+| `/` | list and conversation |
+| `/invite/:id` | preview + `POST /api/invite/{id}/accept` |
 | `/settings/*` | panel |
 
-Na szerokim ekranie masz sidebar (kanały, DM, szukajka **nazw** czatów, nie treści wiadomości), środek z historią i pinem, composer na dole. Pod spodem emoji, GIF, naklejki, plik i call. Na wąskim lista i czat się przełączają — to ten sam stan, tylko inny układ, nie dwa widoki z osobnymi fetchami. Klik w nagłówek otwiera szczegóły kanału albo profil kontaktu. Nieprzeczytane widać na liście; na desktopie jeszcze badge, który czyta `(N)` z tytułu.
+On a wide screen you get a sidebar (channels, DMs, search for chat **names**, not message content), center with history and pins, composer at the bottom. Below that: emoji, GIF, stickers, file, and call. On narrow screens list and chat switch — same state, different layout, not two views with separate fetches. Click the header for channel details or contact profile. Unread shows on the list; on desktop there's also a badge that reads `(N)` from the title.
 
-`/pending` nie jest „ładnym ekranem oczekiwania”. Konto ma ciasteczka, ale kanały, wiadomości, znajomi i handshake WS i tak padną. Nie otwieraj socketa „na wszelki wypadek” — dostaniesz reconnect-loop i śmieć w logach.
+`/pending` is not a "nice waiting screen". The account has cookies, but channels, messages, friends, and WS handshake will still fail. Don't open the socket "just in case" — you'll get a reconnect loop and log noise.
 
-Nowa zakładka w ustawieniach: wpis w `settings/routes.ts`. Slug po angielsku, label z JSON-a.
+New settings tab: add an entry in `settings/routes.ts`. Slug in English, label from JSON.
 
-| W UI | Path |
+| In UI | Path |
 | --- | --- |
-| Moje konto | `/settings/account` |
-| Profil | `/settings/profile` |
-| Urządzenia | `/settings/sessions` |
+| My account | `/settings/account` |
+| Profile | `/settings/profile` |
+| Devices | `/settings/sessions` |
 | Status | `/settings/status` |
-| Głos | `/settings/voice` |
-| Język | `/settings/language` |
-| Ostrzeżenia | `/settings/warnings` |
+| Voice | `/settings/voice` |
+| Language | `/settings/language` |
+| Warnings | `/settings/warnings` |
 
-Język (`pl` / `en`) idzie `PATCH /api/auth/language` i ląduje na koncie, więc nowa przeglądarka dostanie ten sam. Motyw jasny/ciemny zostaje w kliencie — serwer o nim nie wie.
+Language (`pl` / `en`) goes via `PATCH /api/auth/language` and lands on the account, so a new browser gets the same. Light/dark theme stays client-side — the server doesn't know about it.
 
-Katalogi i konwencje: [Frontend](/docs/developers/frontend).
+Folders and conventions: [Frontend](/docs/developers/frontend).

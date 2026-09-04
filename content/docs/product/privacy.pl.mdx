@@ -1,0 +1,17 @@
+---
+title: Prywatność
+description: Co naprawdę chronimy, a czego nie obiecujemy.
+icon: Shield
+---
+
+Od strony kodu: [bezpieczeństwo](/docs/developers/security). Tu raczej to, czego nie wolno napisać w README ani w UI, bo potem ktoś to skopiuje na landing.
+
+Hasła: Argon2, polityka znaków, check wycieków. Login: Turnstile na prodzie, limity, TOTP jak ktoś włączy. Sesja w HttpOnly, da się odwołać z listy urządzeń. Mutacje z przeglądarki: CSRF, Origin, `X-Klovy-Client`. Pliki: R2 → kwarantanna → ClamAV, dopiero potem publiczny URL. Część pól w Mongo szyfrowana kluczem serwera. Ramki WS po `ws-crypto` też AES-GCM.
+
+Reklam nie serwujemy i danych nie sprzedajemy.
+
+**Nie pisz „E2EE”.** Tamten szkic kluczy wyleciał z repo. Serwer czyta wiadomości, bo na nich stoi szukanie, piny, wzmianki i moderacja. Koperta w kliencie to transport, nie Signal. Operator widzi zgłoszenia i warnings, może wyłączyć konto. Delete w aplikacji nie sprząta zrzutów u kogoś na dysku — jak ktoś zrobił screenshot, to już nie Twoja baza.
+
+Kanał zgłaszasz `POST /api/channel/{id}/report`. Luki — Security Advisories w konkretnym repo, nie publiczne issue z PoC. `.env` i klucze Tauri zostają lokalnie.
+
+ToS, prywatność i wytyczne są na [klovy.chat](https://klovy.chat). Tamta strona ma datę **1 września 2026**. Pytania poza kodem: [kontakt@klovy.chat](mailto:kontakt@klovy.chat).

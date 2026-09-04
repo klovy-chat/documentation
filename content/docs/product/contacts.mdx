@@ -1,24 +1,24 @@
 ---
-title: Kontakty i DM
-description: Zaproszenie po username, blokada, wipe.
+title: Contacts and DMs
+description: Invite by username, block, wipe.
 icon: Users
 ---
 
-Nie napiszesz do kogoś z ulicy. Najpierw znajomi, potem DM. To nie jest Slack z workspace’em, gdzie każdy widzi każdego. REST: [kontakty i znajomi](/docs/api/contacts-friends).
+You can't message someone off the street. Friends first, then DM. This isn't Slack with a workspace where everyone sees everyone. REST: [contacts and friends](/docs/api/contacts-friends).
 
-`POST /api/friends/send` `{ username }` — bez `@`. Jak druga strona już wysłała zaproszenie, backend może oddać `autoAccepted` i od razu macie DM. Nie traktuj `autoAccepted` jako błędu, UI ma przejść na listę znajomych.
+`POST /api/friends/send` `{ username }` — no `@`. If the other side already sent a request, the backend may return `autoAccepted` and you have DM right away. Don't treat `autoAccepted` as an error; UI should go to the friends list.
 
 | | |
 | --- | --- |
 | `GET` | `/api/friends/list`, `/received`, `/sent` |
 | `GET` | `/api/friends/status/{userId}` |
 | `POST` | `/{requestId}/accept`, `reject`, `cancel` |
-| `DELETE` | `/api/friends/{userId}` — **kasuje historię DM** |
+| `DELETE` | `/api/friends/{userId}` — **deletes DM history** |
 
-`status` ma `isFriend`, flagi blokady i `pendingRequest` albo `null`. WS: `friendship-added`, `friendship-removed`. Usunięcie znajomego nie jest „cichym unfollow” — historia rozmowy idzie razem. Jak chcesz tylko wyczyścić czat, zostaw znajomego i zrób wipe: `DELETE /api/contacts/{id}/conversation`.
+`status` has `isFriend`, block flags, and `pendingRequest` or `null`. WS: `friendship-added`, `friendship-removed`. Removing a friend isn't a quiet unfollow — conversation history goes with it. To clear chat only, keep the friend and wipe: `DELETE /api/contacts/{id}/conversation`.
 
-Lista w kliencie: `GET /api/contacts/get-contacts-for-list`. Szukanie: `POST /api/contacts/search` `{ searchTerm }` — nie `query`. Stary draft body z `query` dostaje 400 i godzinę szukasz w walidatorze.
+Client list: `GET /api/contacts/get-contacts-for-list`. Search: `POST /api/contacts/search` `{ searchTerm }` — not `query`. An old draft body with `query` gets 400 and you'll spend an hour in the validator.
 
-Profil `GET …/{id}/profile`. Block i mute to toggle POST, nie osobny un-block. Zablokowani: `GET …/blocked`. Blokada tnie DM. Na kanale i tak musisz kick/ban, bo to inna relacja. WS: `contact-block-updated`, `conversation-deleted`, plus update’y profilu / avatara / banera.
+Profile `GET …/{id}/profile`. Block and mute are toggle POST, not a separate un-block. Blocked: `GET …/blocked`. Block cuts DM. On a channel you still need kick/ban — different relationship. WS: `contact-block-updated`, `conversation-deleted`, plus profile / avatar / banner updates.
 
-Obecność kogoś: `GET /api/users/status/{userId}`. Swoją ustawiasz `POST /api/auth/availability-status` `{ availabilityStatus }` (`online`, `away`, `brb`, `dnd`). Idle w kliencie idzie tym POST-em — nie duplikuj `set-status` na WS, bo rozjedziesz stan między kartami.
+Someone's presence: `GET /api/users/status/{userId}`. Yours: `POST /api/auth/availability-status` `{ availabilityStatus }` (`online`, `away`, `brb`, `dnd`). Idle in the client uses that POST — don't duplicate `set-status` on WS or state drifts between tabs.

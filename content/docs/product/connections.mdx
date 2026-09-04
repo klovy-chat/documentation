@@ -1,10 +1,10 @@
 ---
-title: Głos i wideo
-description: Token LiveKit po HTTP, dzwonek po WS.
+title: Voice and video
+description: LiveKit token over HTTP, ring over WS.
 icon: Phone
 ---
 
-Actix nie puszcza RTP. Dostajesz JWT i URL clouda, a pakiety audio/wideo idą prosto do LiveKit. Klient wywali `url` spoza `VITE_LIVEKIT_ALLOWED_HOSTS` — nawet jak token jest podpisany, host spoza listy nie wejdzie. Endpointy: [API głosu](/docs/api/voice).
+Actix doesn't carry RTP. You get a JWT and cloud URL; audio/video packets go straight to LiveKit. The client rejects `url` outside `VITE_LIVEKIT_ALLOWED_HOSTS` — even if the token is signed, a host not on the list won't connect. Endpoints: [voice API](/docs/api/voice).
 
 ```http
 POST /api/voice/token
@@ -14,10 +14,10 @@ POST /api/voice/token
 { "peerId": "userId" }
 ```
 
-albo `{ "channelId": "…" }`. W odpowiedzi `token`, `url`, `room`. `GET /api/voice/active` mówi czy coś już wisi (`mode`: `audio` | `video`). Na backendzie: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`. Bez tych trzech token się nie podpisze; UI wtedy często pokazuje „nie można połączyć”, a w logu backendu jest zwykły brak env.
+or `{ "channelId": "…" }`. Response has `token`, `url`, `room`. `GET /api/voice/active` says if something is already up (`mode`: `audio` | `video`). On the backend: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`. Without those three the token won't sign; UI often shows "can't connect" while the backend log is just missing env.
 
-1:1 na WS, payload `{ from, to }`, invite może dodać `mode`. Z klienta: `call:invite` / `accept` / `reject` / `cancel` / `end` / `timeout`. Z serwera: `incoming`, `accepted`, `rejected`, `cancelled`, `ended`, `unavailable` (zajęty albo offline). Kolejność ma znaczenie: najpierw ramka, potem token, potem connect do pokoju. Odwrotnie dostaniesz pokój bez drugiej strony albo dzwonek bez mediów. W historii wpis `messageType: CALL`.
+1:1 on WS, payload `{ from, to }`, invite may add `mode`. From client: `call:invite` / `accept` / `reject` / `cancel` / `end` / `timeout`. From server: `incoming`, `accepted`, `rejected`, `cancelled`, `ended`, `unavailable` (busy or offline). Order matters: frame first, then token, then connect to room. Reverse that and you get a room without the other side or a ring without media. History gets entry `messageType: CALL`.
 
-Na kanale nie ma drugiej encji „voice channel”. `channel-voice:join` / `leave` / `state` z `{ channelId }`. Composer tekstowy zostaje — ludzie piszą i gadają na tym samym kanale. Samo otwarcie czatu nie łączy mikrofonu; bez `join` LiveKit Cię nie wpuści, nawet jak token już masz.
+On a channel there is no second "voice channel" entity. `channel-voice:join` / `leave` / `state` with `{ channelId }`. Text composer stays — people type and talk on the same channel. Opening chat alone doesn't connect the mic; without `join` LiveKit won't let you in even if you already have a token.
 
-Mikrofon, PTT i jakość share (480p–1080p, fps, Opus) są w `/settings/voice`. getUserMedia załatwia przeglądarka — backend tego nie widzi. Jak na Linuxie nie ma urządzenia albo Safari blokuje, to nie 403 z API, tylko cisza po stronie klienta.
+Mic, PTT, and share quality (480p–1080p, fps, Opus) live in `/settings/voice`. getUserMedia is the browser's job — the backend doesn't see it. No device on Linux or Safari blocking = not a 403 from API, just silence on the client.

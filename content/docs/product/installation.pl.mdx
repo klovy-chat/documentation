@@ -1,0 +1,21 @@
+---
+title: Web i desktop
+description: Jeden frontend, Tauri dokłada okno i badge.
+icon: Download
+---
+
+Klient webowy jest jeden. Nie ma „wersji desktopowej z innymi przyciskami” — Tauri ładuje [app.klovy.chat](https://app.klovy.chat) albo origin z konfigu i dokłada okno, badge oraz updater. Jak coś wygląda źle w aplikacji, najpierw patrz we frontend, nie w `src-tauri`. Build i podpisywanie: [Desktop](/docs/developers/desktop).
+
+Na produkcji frontend stoi na Cloudflare Workers. Lokalnie Vite na `:5173` proxy’uje `/api`, `/whitelist` i `/ws` na backend, więc w DEV rzadko strzelasz przeglądarką prosto na `:8080`. Chrome, Edge, Firefox i Safari z tej dekady są OK. Na telefonie strona wstaje, layout jest obcięty pod wąski ekran. Osobnych appów na Androida i iOS nie robimy i nie planujemy ich doklejać do repo `application`.
+
+| OS | Paczka | Uwaga |
+| --- | --- | --- |
+| Windows | `.msi` / NSIS, Store | WebView2; Store aktualizuje sam |
+| Linux | AppImage, `.deb`, `.rpm` | przy buildzie ze źródeł WebKitGTK 4.1 |
+| macOS | `.dmg` universal, App Store | badge na Docku |
+
+Gotowe pliki: [Releases](https://github.com/klovy-chat/application/releases) albo strona download. CI podpisuje `TAURI_SIGNING_PRIVATE_KEY`. Updater z GitHuba działa tylko przy **publicznym** release — prywatny draft zwraca 404 i w logach wygląda jakby paczka była zła.
+
+Badge czyta liczbę z tytułu okna, np. `(2) Klovy Chat`. Frontend ustawia `document.title`; powłoka nic nie liczy sama. W `tauri dev` tego nie testuj — tylko na zainstalowanym buildzie. To samo z updaterem: `latest.json` z Releases, wariant ze Store ma te endpointy puste. Jest jeszcze Discord Rich Presence, plugin w Tauri, nie osobny serwis.
+
+Windows bez WebView2 = puste okno. Linux bez WebKita = czarne. Jak zmienisz format tytułu na coś w stylu `Klovy Chat — 2`, badge się rozjedzie z powłoką i będziesz szukał błędu w Rustcie, a problem będzie w jednym stringu na froncie.

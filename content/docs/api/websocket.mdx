@@ -1,32 +1,32 @@
 ---
 title: WebSocket
-description: Handshake, ramki type/payload, szyfrowanie i katalog zdarzeń.
+description: Handshake, type/payload frames, encryption, and event catalog.
 icon: Radio
 ---
 
-Po logowaniu klient otwiera WebSocket. Handshake patrzy na JWT z ciasteczek. Konto pending na whiteliście odpada — nie łącz „żeby było”, dostaniesz pętlę reconnect.
+After login the client opens a WebSocket. Handshake reads JWT from cookies. Pending whitelist accounts are rejected — do not connect “just to try”, you will get a reconnect loop.
 
-Query `client=KlovyChatApp` i `wsk` z `POST /api/auth/ws-crypto` są obowiązkowe na produkcji. Bez klucza appka plaintextu nie puści. Keepalive `ping` co ~45 s; jak go nie ma, proxy ucina socket i UI myśli że sieć padła.
+Query `client=KlovyChatApp` and `wsk` from `POST /api/auth/ws-crypto` are required on production. Without the key the app will not send plaintext. Keepalive `ping` every ~45 s; without it, the proxy cuts the socket and the UI thinks the network died.
 
-Nazwy `type` muszą być identyczne w `protocol.ts` i `handlers.rs`. Literówka nie daje 404. Albo cisza, albo ramka `error`.
+`type` names must match exactly in `protocol.ts` and `handlers.rs`. A typo does not give 404. Either silence, or an `error` frame.
 
 ```http
-GET /ws?client=KlovyChatApp&wsk=<token z POST /api/auth/ws-crypto>
+GET /ws?client=KlovyChatApp&wsk=<token from POST /api/auth/ws-crypto>
 Cookie: …access…
 Origin: https://app.klovy.chat
 ```
 
-**Produkcja:** `wss://api.klovy.chat/ws`  
-**Lokalnie (Vite):** `ws://localhost:5173/ws` (proxy na backend)
+**Production:** `wss://api.klovy.chat/ws`  
+**Local (Vite):** `ws://localhost:5173/ws` (proxy to backend)
 
 Query:
 
-| Parametr | Wartość |
+| Parameter | Value |
 | --- | --- |
 | `client` | `KlovyChatApp` |
-| `wsk` | `token` z `POST /api/auth/ws-crypto` |
+| `wsk` | `token` from `POST /api/auth/ws-crypto` |
 
-## Klucz ramek
+## Frame key
 
 ```http
 POST /api/auth/ws-crypto
@@ -40,7 +40,7 @@ POST /api/auth/ws-crypto
 }
 ```
 
-Po uzgodnieniu ramki tekstowe są **AES-GCM**. Format logiczny (przed szyfrem):
+After negotiation, text frames are **AES-GCM**. Logical format (before encryption):
 
 ```json
 {
@@ -49,9 +49,9 @@ Po uzgodnieniu ramki tekstowe są **AES-GCM**. Format logiczny (przed szyfrem):
 }
 ```
 
-Keepalive: `ping` → `pong` (klient co ~45 s). Nazwy `type` muszą być identyczne po obu stronach (`protocol.ts` ↔ `handlers.rs`).
+Keepalive: `ping` → `pong` (client every ~45 s). `type` names must match on both sides (`protocol.ts` ↔ `handlers.rs`).
 
-## Klient → serwer
+## Client → server
 
 ### `sendMessage` — DM
 
@@ -69,17 +69,17 @@ Keepalive: `ping` → `pong` (klient co ~45 s). Nazwy `type` muszą być identyc
 }
 ```
 
-Plik / GIF: te same pola plus `fileUrl`, `fileName`, `fileType`, `fileSize`, opcjonalnie `durationMs`. `content` bywa nazwą pliku.
+File / GIF: same fields plus `fileUrl`, `fileName`, `fileType`, `fileSize`, optionally `durationMs`. `content` may be the file name.
 
 ### `send-channel-message`
 
-Jak wyżej, zamiast `recipient`:
+Same as above, instead of `recipient`:
 
 ```json
 { "channelId": "channelId" }
 ```
 
-Wysyłka używa **nonce** (idempotencja po stronie serwera).
+Send uses **nonce** (server-side idempotency).
 
 ### `editMessage` / `deleteMessage`
 
@@ -101,7 +101,7 @@ Wysyłka używa **nonce** (idempotencja po stronie serwera).
 }
 ```
 
-(HTTP: `PUT` / `DELETE /api/messages/{id}` — w appce edycja i delete idą WS.)
+(HTTP: `PUT` / `DELETE /api/messages/{id}` — in the app, edit and delete go via WS.)
 
 ### `message-reaction`
 
@@ -109,9 +109,9 @@ Wysyłka używa **nonce** (idempotencja po stronie serwera).
 { "type": "message-reaction", "payload": { "messageId": "…", "emoji": "👍" } }
 ```
 
-Max **20** reakcji na wiadomość.
+Max **20** reactions per message.
 
-### Odczyt i pisanie
+### Read and typing
 
 | `type` | `payload` |
 | --- | --- |
@@ -120,13 +120,13 @@ Max **20** reakcji na wiadomość.
 | `mark-conversation-read` | `{ "userId": "…", "contactId": "…" }` |
 | `mark-channel-read` | `{ "userId": "…", "channelId": "…" }` |
 
-### Obecność (rzadko z klienta)
+### Presence (rare from client)
 
-`set-online` / `set-offline` / `set-status`. Oficjalny klient ustawia status przez `POST /api/auth/availability-status`, nie duplikuje tego na WS.
+`set-online` / `set-offline` / `set-status`. Official client sets status via `POST /api/auth/availability-status`, not duplicated on WS.
 
-### Połączenia 1:1
+### 1:1 calls
 
-Wspólny kształt: `{ "from": "myId", "to": "peerId" }` (invite może dodać `mode`: `audio` | `video`).
+Shared shape: `{ "from": "myId", "to": "peerId" }` (invite may add `mode`: `audio` | `video`).
 
 | `type` |
 | --- |
@@ -137,7 +137,7 @@ Wspólny kształt: `{ "from": "myId", "to": "peerId" }` (invite może dodać `mo
 | `call:end` |
 | `call:timeout` |
 
-### Głos na kanale
+### Channel voice
 
 | `type` | `payload` |
 | --- | --- |
@@ -145,31 +145,31 @@ Wspólny kształt: `{ "from": "myId", "to": "peerId" }` (invite może dodać `mo
 | `channel-voice:leave` | `{ "channelId": "…" }` |
 | `channel-voice:state` | `{ "channelId": "…" }` |
 
-## Serwer → klient
+## Server → client
 
-| `type` | Znaczenie |
+| `type` | Meaning |
 | --- | --- |
-| `receiveMessage` / `receive-channel-message` | Nowa wiadomość |
-| `message-edited` / `message-deleted` | Mutacje |
-| `unread-updated` / `messages-read` / `message-read` | Nieprzeczytane |
-| `message-mention` | Wzmianka |
-| `user-status-changed` | Obecność znajomego |
-| `profile-updated` i warianty avatar/banner | Profil |
-| `channel-added` / `channel-left` / `channel-deleted` | Członkostwo |
-| `channel-member-joined` / `channel-member-left` | Lista członków |
-| `channel-name-updated` / `channel-avatar-updated` | Metadane |
-| `channel-slowmode-updated` / `channel-chat-locked-updated` / `channel-moderation-updated` | Moderacja |
-| `friendship-added` / `friendship-removed` | Znajomi |
-| `contact-block-updated` | Blokada |
-| `conversation-deleted` | Wipe historii DM |
-| `call:incoming` `accepted` `rejected` `cancelled` `ended` `unavailable` | Połączenie |
-| `session:revoked` | Wylogowanie zdalne |
-| `whitelist:approved` | Koniec oczekiwania |
-| `announcement:published` | Ogłoszenie |
-| `user:warned` / `user:warning-revoked` | Moderacja konta |
-| `dm-error` / `error` | Błąd operacji |
-| `pong` | Odpowiedź na `ping` |
+| `receiveMessage` / `receive-channel-message` | New message |
+| `message-edited` / `message-deleted` | Mutations |
+| `unread-updated` / `messages-read` / `message-read` | Unread |
+| `message-mention` | Mention |
+| `user-status-changed` | Friend presence |
+| `profile-updated` and avatar/banner variants | Profile |
+| `channel-added` / `channel-left` / `channel-deleted` | Membership |
+| `channel-member-joined` / `channel-member-left` | Member list |
+| `channel-name-updated` / `channel-avatar-updated` | Metadata |
+| `channel-slowmode-updated` / `channel-chat-locked-updated` / `channel-moderation-updated` | Moderation |
+| `friendship-added` / `friendship-removed` | Friends |
+| `contact-block-updated` | Block |
+| `conversation-deleted` | DM history wipe |
+| `call:incoming` `accepted` `rejected` `cancelled` `ended` `unavailable` | Call |
+| `session:revoked` | Remote sign-out |
+| `whitelist:approved` | End of waiting |
+| `announcement:published` | Announcement |
+| `user:warned` / `user:warning-revoked` | Account moderation |
+| `dm-error` / `error` | Operation error |
+| `pong` | Response to `ping` |
 
 <Callout type="info">
-  To nie jest bot gateway. Jak zmienisz string `type`, musisz wydać frontend i backend razem.
+  This is not a bot gateway. If you change a `type` string, you must ship frontend and backend together.
 </Callout>

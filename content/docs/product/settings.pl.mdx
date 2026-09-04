@@ -1,0 +1,24 @@
+---
+title: Ustawienia
+description: Która zakładka woła który endpoint.
+icon: Settings
+---
+
+Slugi: [trasy](/docs/product/interface). Mutacje: [auth](/docs/api/auth). CSRF na POST/PATCH/DELETE — jak zapis profilu wraca 403 z `Invalid or missing CSRF token`, cookie i nagłówek się rozjechały, nie „złe bio”.
+
+| W UI | Request |
+| --- | --- |
+| Nazwa, bio, kolor | `POST /api/auth/update-profile` `{ displayName, bio?, color? }` |
+| Avatar / baner | `POST` multipart, zdejmowanie `DELETE` |
+| Username | `POST /api/auth/change-username` `{ username, password, code? }` |
+| Hasło | `POST /api/auth/change-password` `{ currentPassword, newPassword, code? }` |
+| 2FA | `/api/auth/2fa/setup` · `enable` · `disable` |
+| Wyłączenie / usunięcie | `/api/auth/account/*` + hasło (i TOTP jak jest) |
+
+Avatar ~6 MiB, banner ~7 MiB. Hasło, nazwa, upload i 2FA mają osobne limity — 429 na zmianie nicka nie znaczy że login też padł.
+
+`GET /api/auth/sessions` — urządzenia. Odwołanie bieżącej zamyka WS (`session:revoked`). `revoke-others` zostawia tę kartę, resztę wylogowuje. Przycisk „wyloguj inne urządzenia” ma wołać to, nie pętlę `DELETE` po liście.
+
+W UI: Dostępny → `online`, Niedostępny wygląda jak offline (`away`), Zaraz wracam → `brb`, Nie przeszkadzać → `dnd`. Idle woła ten sam POST co ręczna zmiana. Nie wysyłaj statusu jeszcze raz przez WS.
+
+Język jest na koncie (`PATCH /api/auth/language`). Motyw tylko w kliencie. Głos (urządzenia, PTT, jakość share) też — serwer nie trzyma wybranego mikrofonu. Ostrzeżenia: `GET /api/auth/warnings` + `acknowledge`. Ogłoszenia analogicznie, dismiss osobno.

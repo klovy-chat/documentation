@@ -1,0 +1,41 @@
+---
+title: Backend
+description: Axum na brzegu, Actix na REST i WebSocket.
+icon: Server
+---
+
+Repo: [klovy-chat/backend](https://github.com/klovy-chat/backend). Binarka nazywa się `klovy-chat-server`. Publiczny port (domyślnie 8080) to Axum; Actix siedzi obok na wewnętrznym HTTP i obsługuje `/api/*` plus upgrade `/ws`.
+
+Reszta stosu: MongoDB Atlas, Cloudflare R2, ClamAV, tokeny LiveKit, Argon2 na hasła, JWT w ciasteczkach, AES-GCM na części pól i na ramkach WS, TOTP na 2FA.
+
+```
+src/
+├── main.rs           start, indeksy Mongo, bind
+├── routes/           /api/*
+├── controllers/      logika
+├── model/            dokumenty Mongo
+├── ws/               handshake, encrypt, handlers
+├── middlewares/      auth, CSRF, captcha, origin, whitelist
+└── utils/            storage, scan, crypto
+```
+
+Nowy endpoint najpierw wpisujesz w `routes/*.rs` — tam decydujesz czy jest publiczny, czy `verify_token`, czy Turnstile, czy limiter. Dopiero potem funkcja w `controllers/`. Jak zrobisz odwrotnie, trasa nie istnieje i godzinę szukasz literówki w nazwie handlera.
+
+| Grupa | Przykłady |
+| --- | --- |
+| Serwer | `PORT`, `INTERNAL_HTTP_PORT`, `TRUST_PROXY`, `NODE_ENV` |
+| Baza | `MONGODB_URI`, `DB_NAME` |
+| Auth | `JWT_KEY`, `FIELD_ENCRYPTION_KEY`, `TOKEN_HASH_KEY` |
+| CORS | `ORIGIN`, `FRONTEND_URL` |
+| Captcha | `TURNSTILE_SECRET_KEY` |
+| Storage | `R2_*`, `CDN_PUBLIC_BASE_URL`, `R2_QUARANTINE_BUCKET` |
+| Skan | `CLAMAV_HOST` |
+| Głos | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` |
+
+Na produkcji Origin i Frontend muszą być HTTPS. Bucket kwarantanny ma być **inny** niż publiczny CDN. ClamAV na prodzie ma być włączony; dummy host w DEV tylko po to, żeby proces wstał.
+
+Kolejność middleware na Actix, mniej więcej: kompresja, security headers, limity, client guard, origin, **CSRF**, sanityzacja JSON, proxy, scope `/api/…`. Login, signup, login/2fa i refresh CSRF nie biorą — reszta mutacji chce cookie `csrf_token` i ten sam string w `x-csrf-token`. GET/HEAD/OPTIONS bez CSRF.
+
+Kanały, wiadomości i znajomi idą jeszcze przez whitelistę. Konto „pending” ma ważne ciasteczka, ale te scope’y i handshake WS i tak padną. UI ma trzymać takiego usera na `/pending`, nie „próbować czatu aż przejdzie”.
+
+W repo jest `encrypt-old-messages` (stare rekordy), `Caddyfile.example` (`:8081` → `:8080`), Compose z profilem `scan` i `deploy.yml` na `main`. Workflow deployu na forku się nie odpali — tak jest ustawione w yaml. Env produkcyjny nie commitujemy; szablon jest w `.env.example`.

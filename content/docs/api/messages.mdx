@@ -1,18 +1,18 @@
 ---
-title: Wiadomości
-description: Historia, edycja, usuwanie, piny, wyszukiwanie i upload.
+title: Messages
+description: History, edit, delete, pins, search, and upload.
 icon: Mail
 ---
 
-Prefiks `/api/messages` (alias `/api/message`). Sesja i whitelist. Nowej wiadomości tu nie wyślesz — to WS. HTTP jest od historii, pinów, searchu i plików. W appce edycja i delete też idą ramkami; `PUT`/`DELETE` na tym prefiksie istnieją, jak piszesz własny klient.
+Prefix `/api/messages` (alias `/api/message`). Session and whitelist. You cannot send a new message here — that is WS. HTTP is for history, pins, search, and files. In the app, edit and delete also go via frames; `PUT`/`DELETE` on this prefix exist if you write your own client.
 
-Typy: `TEXT`, `FILE`, `IMAGE`, `VIDEO`, `AUDIO`, `STICKER`, `CALL`. Treść max 2000 znaków. Przy sendzie dawaj `clientNonce`, inaczej retry na chwiejnym sockecie zrobi dubel. Search chce `contactId` albo `channelId`, nie obu naraz.
+Types: `TEXT`, `FILE`, `IMAGE`, `VIDEO`, `AUDIO`, `STICKER`, `CALL`. Content max 2000 characters. On send, include `clientNonce`, otherwise a retry on a flaky socket will duplicate. Search wants `contactId` or `channelId`, not both.
 
-## Historia
+## History
 
 ### POST `/api/messages/get-messages`
 
-Aliasy: `POST /api/messages`, `/list`.
+Aliases: `POST /api/messages`, `/list`.
 
 DM:
 
@@ -31,7 +31,7 @@ DM:
 }
 ```
 
-Historia kanału: `GET /api/channel/get-channel-messages/{channelId}?before=&limit=`.
+Channel history: `GET /api/channel/get-channel-messages/{channelId}?before=&limit=`.
 
 ### POST `/api/messages/pinned`
 
@@ -39,11 +39,11 @@ Historia kanału: `GET /api/channel/get-channel-messages/{channelId}?before=&lim
 { "contactId": "…" }
 ```
 
-albo `{ "channelId": "…" }`.
+or `{ "channelId": "…" }`.
 
 ### POST `/api/messages/search`
 
-Min. 2 znaki.
+Min. 2 characters.
 
 ```json
 {
@@ -53,13 +53,13 @@ Min. 2 znaki.
 }
 ```
 
-Podaj `contactId` **albo** `channelId`.
+Provide `contactId` **or** `channelId`.
 
-## Mutacje
+## Mutations
 
 ### PUT `/api/messages/{messageId}`
 
-Edycja własnej wiadomości. W appce idzie to ramką `editMessage`.
+Edit your own message. In the app this goes via the `editMessage` frame.
 
 ```json
 { "content": "nowy tekst" }
@@ -67,26 +67,26 @@ Edycja własnej wiadomości. W appce idzie to ramką `editMessage`.
 
 ### DELETE `/api/messages/{messageId}`
 
-Miękkie usunięcie. W appce ramka `deleteMessage`.
+Soft delete. In the app the `deleteMessage` frame.
 
 ### POST `/api/messages/{messageId}/pin`
 
 ### DELETE `/api/messages/{messageId}/pin`
 
-Osobny limiter pinów.
+Separate pin rate limiter.
 
-## Pliki i linki
+## Files and links
 
 ### POST `/api/messages/upload-file`
 
-Aliasy: `/upload`, `/file`. `multipart/form-data`:
+Aliases: `/upload`, `/file`. `multipart/form-data`:
 
-| Pole | Wartość |
+| Field | Value |
 | --- | --- |
-| `file` | plik (max ~10 MB) |
+| `file` | file (max ~10 MB) |
 | `contentType` | MIME |
-| `contextType` | `dm` lub `channel` |
-| `contextId` | id kontaktu albo kanału |
+| `contextType` | `dm` or `channel` |
+| `contextId` | contact or channel id |
 
 ```json
 {
@@ -95,7 +95,7 @@ Aliasy: `/upload`, `/file`. `multipart/form-data`:
 }
 ```
 
-`scanStatus`: `pending` | `clean` | `blocked` (ClamAV). Zablokowany plik nie trafia na CDN.
+`scanStatus`: `pending` | `clean` | `blocked` (ClamAV). Blocked files do not reach the CDN.
 
 ### POST `/api/messages/link-preview`
 
@@ -103,15 +103,15 @@ Aliasy: `/upload`, `/file`. `multipart/form-data`:
 { "url": "https://open.spotify.com/track/…" }
 ```
 
-## Realtime (nie REST)
+## Realtime (not REST)
 
-| WS `type` | Rola |
+| WS `type` | Role |
 | --- | --- |
-| `sendMessage` | nowa DM |
-| `send-channel-message` | kanał |
-| `editMessage` / `deleteMessage` | mutacje |
-| `message-reaction` | reakcja (max 20 na wiadomość) |
-| `receiveMessage` / `receive-channel-message` | odbiór |
-| `message-mention` | wzmianka |
+| `sendMessage` | new DM |
+| `send-channel-message` | channel |
+| `editMessage` / `deleteMessage` | mutations |
+| `message-reaction` | reaction (max 20 per message) |
+| `receiveMessage` / `receive-channel-message` | receive |
+| `message-mention` | mention |
 
-Szczegóły: [WebSocket](/docs/api/websocket).
+Details: [WebSocket](/docs/api/websocket).

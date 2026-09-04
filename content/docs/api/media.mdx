@@ -1,20 +1,20 @@
 ---
-title: GIF, naklejki, emoji
-description: Proxy Giphy i biblioteka emoji przez backend Klovy.
+title: GIFs, stickers, emoji
+description: Giphy proxy and emoji library through the Klovy backend.
 icon: Image
 ---
 
-Klucz Giphy zostaje na serwerze. Klient woła tylko nasz backend. Sesja wymagana. Nie wklejaj klucza do Vite i nie bij w api.giphy.com z przeglądarki — CORS i tak Cię wytnie, a klucz wycieknie w bundle.
+The Giphy key stays on the server. The client only calls our backend. Session required. Do not paste the key into Vite and do not hit api.giphy.com from the browser — CORS will block you anyway, and the key will leak in the bundle.
 
-GIF i naklejka to URL. Wysyłka do czatu i tak jest ramką WS z `fileUrl`, nie osobnym POST-em „wyślij gifa”.
+GIF and sticker are URLs. Sending to chat is still a WS frame with `fileUrl`, not a separate “send gif” POST.
 
-## GIF-y — `/api/gifs`
+## GIFs — `/api/gifs`
 
 Alias: `/api/gif`.
 
 ### GET `/api/gifs/trending`
 
-Query: `limit` (domyślnie 24), `lang` (`pl` | `en`).
+Query: `limit` (default 24), `lang` (`pl` | `en`).
 
 ```json
 {
@@ -31,7 +31,7 @@ Query: `limit` (domyślnie 24), `lang` (`pl` | `en`).
 }
 ```
 
-Aliasy trendów: `GET /api/gifs`, `/trends`.
+Trending aliases: `GET /api/gifs`, `/trends`.
 
 ### GET `/api/gifs/search`
 
@@ -39,13 +39,13 @@ Aliasy trendów: `GET /api/gifs`, `/trends`.
 GET /api/gifs/search?q=kot&limit=24&lang=pl
 ```
 
-Limiter wyszukiwania (`discovery_limiter`).
+Search rate limiter (`discovery_limiter`).
 
-## Naklejki — `/api/stickers`
+## Stickers — `/api/stickers`
 
-Jak GIF-y:
+Same as GIFs:
 
-| Metoda | Endpoint |
+| Method | Endpoint |
 | --- | --- |
 | `GET` | `/api/stickers/trending` (`/`, `/trends`) |
 | `GET` | `/api/stickers/search?q=` |
@@ -54,4 +54,4 @@ Jak GIF-y:
 
 ### GET `/api/emojis`
 
-Alias: `/api/emoji`. Biblioteka do pickera (standard + ewentualne zestawy serwera).
+Alias: `/api/emoji`. Library for the picker (standard + optional server sets).

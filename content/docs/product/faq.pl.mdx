@@ -1,0 +1,49 @@
+---
+title: FAQ
+description: Rzeczy, o które ktoś pyta przy pierwszym PR.
+icon: Info
+---
+
+## Bot API? OAuth? Webhooki?
+
+Nie. To API klienta Klovy — te same ścieżki co w `src/api`. Osobnego gatewaya dla botów nie ma i nie doklejamy go „obok” bo Discord tak ma.
+
+## Czemu username, nie e-mail?
+
+Tak jest zrobione konto. Maila przy signupie nie zbieramy, resetu na skrzynkę też nie ma. Czy signup w ogóle stoi: `GET /api/auth/registration-status`.
+
+## Sesja jest, czat martwy
+
+Whitelist. Zostań na `/pending`, WS nie otwieraj. Serwer puści zakres czatu po `whitelist:approved`. Handshake wcześniej i tak padnie, a w logach będzie reconnect co sekundę.
+
+## Dodać serwery i role jak Discord?
+
+Nie. Kanał = grupa, jeden `admin` (twórca). Botów, ról i katalogu publicznych kanałów też nie ma.
+
+## Wysyłka wiadomości POST-em?
+
+W appce nie. Historia i upload HTTP, send na WS z `clientNonce`. `PUT`/`DELETE /api/messages/{id}` istnieją, UI i tak idzie ramkami.
+
+## Język i slowmode — POST czy PATCH?
+
+Język: `PATCH /api/auth/language`. Slowmode i lock: `PATCH`. Avatar precz: `DELETE`, nie POST z nullem.
+
+## Search kontaktów polem `query`?
+
+Nie. `{ "searchTerm": "…" }`. Lista DM: `/api/contacts/get-contacts-for-list`, nie gołe `/api/contacts` — alias istnieje, oficjalny klient woła dłuższą ścieżkę.
+
+## Klucz Giphy na frontendzie?
+
+Nie. `GET /api/gifs/*` i `/api/stickers/*`. Klucz zostaje w env backendu.
+
+## Spotify na profilu?
+
+Nie. Tylko embed z `POST /api/messages/link-preview`.
+
+## E2EE?
+
+Nie. Serwer czyta treści. [Prywatność](/docs/product/privacy).
+
+## Gdzie PR?
+
+UI → [frontend](https://github.com/klovy-chat/frontend). API → [backend](https://github.com/klovy-chat/backend). Tauri → [application](https://github.com/klovy-chat/application). Docs → ten folder. Luki → Advisories, bez publicznego PoC. Pytania o kod: [kontakt@klovy.chat](mailto:kontakt@klovy.chat).

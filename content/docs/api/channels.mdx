@@ -1,18 +1,18 @@
 ---
-title: Kanały
-description: CRUD kanałów, członkowie, zaproszenia, slowmode i lock czatu.
+title: Channels
+description: Channel CRUD, members, invites, slowmode, and chat lock.
 icon: Hash
 ---
 
-Prefiks `/api/channel` (jest też `/api/channels` — ten sam kontroler). Sesja, whitelist, CSRF na mutacjach. Twórca jest jedynym `admin`. Kick, ban, slowmode i lock to on; reszta członków ma composer, dopóki lock nie wstanie.
+Prefix `/api/channel` (also `/api/channels` — same controller). Session, whitelist, CSRF on mutations. The creator is the sole `admin`. Kick, ban, slowmode, and lock are theirs; other members can compose until lock is on.
 
-Historia kanału jest pod tym prefiksem (`get-channel-messages`). Nowej wiadomości tu nie wyślesz — to WS `send-channel-message`.
+Channel history lives under this prefix (`get-channel-messages`). You cannot send a new message here — that is WS `send-channel-message`.
 
-## Lista i CRUD
+## List and CRUD
 
 ### GET `/api/channel/get-user-channels`
 
-Aliasy: `GET /api/channel`, `/list`, `/user-channels`.
+Aliases: `GET /api/channel`, `/list`, `/user-channels`.
 
 ```json
 { "channels": [] }
@@ -20,7 +20,7 @@ Aliasy: `GET /api/channel`, `/list`, `/user-channels`.
 
 ### POST `/api/channel/create-channel`
 
-Aliasy: `POST /api/channel`, `/create`.
+Aliases: `POST /api/channel`, `/create`.
 
 ```json
 {
@@ -35,7 +35,7 @@ Aliasy: `POST /api/channel`, `/create`.
 
 ### POST `/api/channel/add-user/{channelId}`
 
-Tylko właściciel. W appce członków zwykle wrzucasz od razu w `create-channel`.
+Owner only. In the app you usually add members right in `create-channel`.
 
 ```json
 { "userIdToAdd": "…" }
@@ -43,7 +43,7 @@ Tylko właściciel. W appce członków zwykle wrzucasz od razu w `create-channel
 
 ### GET `/api/channel/{channelId}/details`
 
-Szczegóły, członkowie, bany, wyciszenia.
+Details, members, bans, mutes.
 
 ### PATCH `/api/channel/{channelId}/name`
 
@@ -53,19 +53,19 @@ Szczegóły, członkowie, bany, wyciszenia.
 
 ### POST `/api/channel/{channelId}/avatar`
 
-`multipart/form-data`, pole `avatar`.
+`multipart/form-data`, field `avatar`.
 
 ### DELETE `/api/channel/{channelId}/avatar`
 
 ### DELETE `/api/channel/delete/{channelId}`
 
-Alias: `DELETE /api/channel/{channelId}`. Tylko właściciel. Kasuje wiadomości trwale.
+Alias: `DELETE /api/channel/{channelId}`. Owner only. Permanently deletes messages.
 
 ### POST `/api/channel/leave/{channelId}`
 
 Alias: `POST /api/channel/{channelId}/leave`.
 
-## Moderacja (właściciel)
+## Moderation (owner)
 
 ### POST `/api/channel/{channelId}/kick`
 
@@ -82,7 +82,7 @@ Alias: `POST /api/channel/{channelId}/leave`.
 }
 ```
 
-Bez `durationSeconds` — ban na stałe. Typowe czasy UI: 5 min → 7 dni.
+Without `durationSeconds` — permanent ban. Typical UI durations: 5 min → 7 days.
 
 ### POST `/api/channel/{channelId}/unban`
 
@@ -111,7 +111,7 @@ Bez `durationSeconds` — ban na stałe. Typowe czasy UI: 5 min → 7 dni.
 { "rateLimitPerUser": 10 }
 ```
 
-`0` wyłącza tryb wolny (sekundy między wiadomościami).
+`0` disables slow mode (seconds between messages).
 
 ### PATCH `/api/channel/{channelId}/chat-lock`
 
@@ -119,11 +119,11 @@ Bez `durationSeconds` — ban na stałe. Typowe czasy UI: 5 min → 7 dni.
 { "chatLocked": true }
 ```
 
-Przy `true` pisze tylko właściciel.
+When `true`, only the owner can write.
 
 ### POST `/api/channel/{channelId}/mute`
 
-Wycisz powiadomienia u siebie. Toggle.
+Mute notifications for yourself. Toggle.
 
 ### POST `/api/channel/{channelId}/report`
 
@@ -134,36 +134,36 @@ Wycisz powiadomienia u siebie. Toggle.
 }
 ```
 
-Powody: spam, offensive, harassment, illegal, impersonation, other.
+Reasons: spam, offensive, harassment, illegal, impersonation, other.
 
-## Zaproszenia
+## Invites
 
 ### GET `/api/channel/{channelId}/invites`
 
 ### POST `/api/channel/{channelId}/invites`
 
-Aliasy: `/invite`, `/invite-link`.
+Aliases: `/invite`, `/invite-link`.
 
 ```json
 { "maxUses": 50 }
 ```
 
-Bez `maxUses` — bez limitu dołączeń.
+Without `maxUses` — no join limit.
 
 ### DELETE `/api/channel/{channelId}/invites/{inviteId}`
 
 ### GET `/api/invites/{inviteId}`
 
-Podgląd (zalogowany). Stany: brak, wygasłe, unieważnione, limit.
+Preview (signed in). States: missing, expired, revoked, limit reached.
 
 ### POST `/api/invites/{inviteId}/accept`
 
-Alias: `/join`. Dołącza bieżącego użytkownika.
+Alias: `/join`. Joins the current user.
 
-## Historia kanału (HTTP)
+## Channel history (HTTP)
 
 ### GET `/api/channel/get-channel-messages/{channelId}`
 
-Aliasy: `/messages/{id}`, `/{id}/messages`. Query: `?before={messageId}&limit=50`.
+Aliases: `/messages/{id}`, `/{id}/messages`. Query: `?before={messageId}&limit=50`.
 
-Wysyłka na żywo: WS `send-channel-message`. Zdarzenia: `channel-added`, `channel-member-joined`, `channel-slowmode-updated`, `channel-chat-locked-updated`, …
+Live send: WS `send-channel-message`. Events: `channel-added`, `channel-member-joined`, `channel-slowmode-updated`, `channel-chat-locked-updated`, …

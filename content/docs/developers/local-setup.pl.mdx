@@ -1,0 +1,86 @@
+---
+title: Lokalne środowisko
+description: Frontend i backend na jednej maszynie.
+icon: Laptop
+---
+
+Klonujesz dwa repo obok siebie. W tym workspace jest to `klovy-chat-frontend` i `klovy-chat-backend`. Ścieżki względne (`../backend`) w skryptach frontendu zakładają właśnie taki układ, nie monorepo. Jak wrzucisz backend głębiej albo nazwiesz folder inaczej, `npm run dev:all` nie znajdzie `cargo` i będziesz debugował Vite zamiast ścieżki.
+
+Desktop (`application`) nie jest potrzebny do czatu w przeglądarce. Dokładasz go jak testujesz badge albo instalator.
+
+| Narzędzie | Wersja |
+| --- | --- |
+| Node.js | 18+ na frontend; te docs potrzebują 22+ |
+| Bun albo npm | w frontendzie w package.json jest `bun@1.2.15` |
+| Rust (stable) | rustup, bez nocnego toolchainu |
+| MongoDB Atlas | connection string w `MONGODB_URI` |
+| Docker | tylko jeśli odpalasz ClamAV (`scan`) |
+
+W `development` Turnstile i ClamAV możesz pominąć. Dummy wartości `R2_*` wystarczą, żeby proces Rust w ogóle wstał. Upload pliku na takim dummy nic sensownego nie zapisze — do testów załączników potrzebujesz prawdziwego bucketa albo mocka, którego tu nie ma.
+
+## Backend
+
+```bash
+git clone https://github.com/klovy-chat/backend.git
+cd backend
+cp .env.example .env
+```
+
+Jedyna rzecz, której szablon nie zgadnie, to URI Atlasa. Reszta celuje w `127.0.0.1:8080`. `ORIGIN` i `FRONTEND_URL` ustaw na origin Vite (`http://127.0.0.1:5173` albo `http://localhost:5173` — **ten sam**, którego używasz w pasku; mieszanie localhost i 127.0.0.1 sypie CORS-em).
+
+```bash
+cargo run
+```
+
+Pierwszy build trwa. Jak wywali się na Mongo, nie szukaj błędu w routerze.
+
+Skaner, gdy naprawdę testujesz upload:
+
+```bash
+docker compose --profile scan up -d
+```
+
+i w `.env` `CLAMAV_HOST=127.0.0.1:3310`.
+
+## Frontend
+
+```bash
+git clone https://github.com/klovy-chat/frontend.git
+cd frontend
+cp .env.example .env
+```
+
+Szablon ma `VITE_BACKEND_URL=http://127.0.0.1:8080`. Turnstile w DEV jest wyłączony, nie wklejaj site keya „na zapas”.
+
+```bash tab="Bun"
+bun install
+bun run dev
+```
+
+```bash tab="npm"
+npm install
+npm run dev
+```
+
+Klient: [http://127.0.0.1:5173](http://127.0.0.1:5173). Proxy Vite łapie `/api`, `/whitelist` i `/ws`, więc w DEV często w ogóle nie celujesz przeglądarką prosto na `:8080`.
+
+Jak backend leży w `../backend`, możesz jednym poleceniem:
+
+```bash
+npm run dev:all
+```
+
+## Desktop
+
+```bash
+git clone https://github.com/klovy-chat/application.git
+cd application
+npm install
+npm run dev
+```
+
+Potrzebujesz Rusta i SDK od systemu: WebView2 na Windows, Xcode na macOS, WebKitGTK 4.1 na Linuxie. W `dev` okno ładuje frontend z sieci (albo z Vite, zależnie od konfigu). Badge nieprzeczytanych i updater **nie** zachowują się jak na instalatorze — do tego potrzebny jest spakowany build.
+
+## Jak pada
+
+Backend bez `MONGODB_URI` nie wstanie, kropka. CORS: `ORIGIN` / `FRONTEND_URL` ≠ to, co masz w przeglądarce. Port `8080` zajęty — zmień `PORT` i ten sam numer w `VITE_BACKEND_URL`. Te docs (Fumadocs) na Node poniżej 22 sypią Turbopackiem albo `require(esm)`; to nie jest bug frontendu czatu.
